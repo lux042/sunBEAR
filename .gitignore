@@ -1,0 +1,49 @@
+# Xcode user settings
+xcuserdata/
+*.xcuserstate
+
+# Xcode build files
+build/
+DerivedData/
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Swift Package Manager
+.build/
+.swiftpm/
+Package.resolved
+
+# CocoaPods
+Pods/
+
+# Carthage
+Carthage/Build/
+
+# macOS
+.DS_Store
+
+# Temporary files
+*.swp
+*.tmp
+*~
+
+# Local configuration and secrets
+.env
+.env.*
+Secrets.swift
+Config.local.swift
+*.xcconfig.local
+
+# Scraped output
+Exports/
+Downloads/
+PDFs/
+ScrapeResults/
+*.tsv
+*.csv
+
+# Logs
+*.log
+Logs/
