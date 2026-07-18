@@ -69,6 +69,7 @@ struct CIAReadingRoomBrowserView: View {
     @State private var progressText: String?
     @State private var errorMessage: String?
     @State private var importComplete = false
+    @State private var pagesToImport = 1
 
     var body: some View {
         VStack(spacing: 0) {
@@ -87,7 +88,15 @@ struct CIAReadingRoomBrowserView: View {
                         .foregroundStyle(.secondary)
                 }
 
-                Button("Import Visible Results", systemImage: "square.and.arrow.down") {
+                Stepper(value: $pagesToImport, in: 1...5) {
+                    Text("\(pagesToImport) page\(pagesToImport == 1 ? "" : "s")")
+                        .monospacedDigit()
+                }
+                .fixedSize()
+                .disabled(isImporting)
+                .help("Import the visible page and up to four following pages")
+
+                Button("Import Results", systemImage: "square.and.arrow.down") {
                     Task { await importVisibleResults() }
                 }
                 .buttonStyle(.borderedProminent)
@@ -96,6 +105,16 @@ struct CIAReadingRoomBrowserView: View {
                 Button("Close") { dismiss() }
             }
             .padding(10)
+
+            HStack(spacing: 8) {
+                Image(systemName: "info.circle")
+                Text("Pagination starts on the CIA results page currently visible below. To collect another batch, navigate to the desired starting page, choose 1–5 pages, then click Import Results. Each import is limited to 100 documents.")
+                Spacer()
+            }
+            .font(.caption)
+            .foregroundStyle(.secondary)
+            .padding(.horizontal, 12)
+            .padding(.bottom, 8)
 
             if let errorMessage {
                 Text(errorMessage)
@@ -123,36 +142,66 @@ struct CIAReadingRoomBrowserView: View {
 
         do {
             let pageURL = session.webView.url ?? URL(string: "https://www.cia.gov")!
-            let html = try await session.visibleHTML()
-            let results = CIASearchResultParser().parse(html: html, baseURL: pageURL)
-            guard !results.isEmpty else {
+            var pageHTML = try await session.visibleHTML()
+            var currentPageURL = pageURL
+            let firstPage = CIASearchResultParser().parsePage(
+                html: pageHTML,
+                baseURL: currentPageURL
+            )
+            guard !firstPage.results.isEmpty else {
                 throw ImportError.noVisibleResults
             }
 
             let queryName = await session.visibleQueryName()
             var query = CIASearchQuery()
             query.searchTerms = queryName
-            query.maximumPages = 1
-            query.maximumDocumentRequests = min(100, results.count)
+            query.maximumPages = pagesToImport
+            query.maximumDocumentRequests = min(100, pagesToImport * 20)
 
             let job = ScrapeJob(query: query)
             job.status = .running
             modelContext.insert(job)
             var records: [CIADocumentRecord] = []
+            var discoveredURLs = Set<URL>()
+            var pagesCompleted = 0
+            var documentRequests = 0
 
-            for (index, result) in results.prefix(100).enumerated() {
-                try Task.checkCancellation()
-                progressText = "Importing metadata \(index + 1) of \(min(100, results.count))…"
-                if index > 0 {
-                    try await Task.sleep(for: .seconds(Double.random(in: 2.5...5.0)))
+            while pagesCompleted < pagesToImport && documentRequests < 100 {
+                let page = CIASearchResultParser().parsePage(
+                    html: pageHTML,
+                    baseURL: currentPageURL
+                )
+                let newResults = page.results.filter {
+                    discoveredURLs.insert($0.documentURL).inserted
                 }
-                let detailHTML = try await session.fetchHTML(from: result.documentURL)
-                if let record = CIADocumentParser().parse(
-                    html: detailHTML,
-                    sourceURL: result.documentURL
-                ) {
-                    records.append(record)
+                pagesCompleted += 1
+
+                for result in newResults {
+                    guard documentRequests < 100 else { break }
+                    try Task.checkCancellation()
+                    documentRequests += 1
+                    progressText = "Page \(pagesCompleted) of \(pagesToImport): metadata \(documentRequests) of up to \(min(100, pagesToImport * 20))…"
+                    if documentRequests > 1 {
+                        try await Task.sleep(for: .seconds(Double.random(in: 2.5...5.0)))
+                    }
+                    let detailHTML = try await session.fetchHTML(from: result.documentURL)
+                    if let record = CIADocumentParser().parse(
+                        html: detailHTML,
+                        sourceURL: result.documentURL
+                    ) {
+                        records.append(record)
+                    }
                 }
+
+                guard pagesCompleted < pagesToImport,
+                      documentRequests < 100,
+                      let nextPageURL = page.nextPageURL
+                else { break }
+
+                progressText = "Waiting before page \(pagesCompleted + 1)…"
+                try await Task.sleep(for: .seconds(Double.random(in: 8.0...15.0)))
+                pageHTML = try await session.fetchHTML(from: nextPageURL)
+                currentPageURL = nextPageURL
             }
 
             for record in records {
@@ -161,8 +210,8 @@ struct CIAReadingRoomBrowserView: View {
                 job.documents.append(savedDocument)
             }
 
-            job.pagesCompleted = 1
-            job.documentsDiscovered = results.count
+            job.pagesCompleted = pagesCompleted
+            job.documentsDiscovered = discoveredURLs.count
             job.documentsParsed = records.count
             job.status = records.isEmpty ? .failed : .completed
             job.updatedAt = .now
@@ -179,7 +228,7 @@ struct CIAReadingRoomBrowserView: View {
             }
 
             try modelContext.save()
-            progressText = "Saved \(records.count) documents and Metadata TSV"
+            progressText = "Saved \(records.count) documents from \(pagesCompleted) page\(pagesCompleted == 1 ? "" : "s") and Metadata TSV"
             importComplete = true
         } catch {
             errorMessage = error.localizedDescription
