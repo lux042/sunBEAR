@@ -141,6 +141,7 @@ struct CIAReadingRoomBrowserView: View {
         isImporting = true
         errorMessage = nil
         progressText = "Reading visible results…"
+        await ScrapeNotificationManager.shared.requestAuthorization()
 
         do {
             let pageURL = session.webView.url ?? URL(string: "https://www.cia.gov")!
@@ -163,6 +164,7 @@ struct CIAReadingRoomBrowserView: View {
             let job = ScrapeJob(query: query)
             job.status = .running
             modelContext.insert(job)
+            try modelContext.save()
             var records: [CIADocumentRecord] = []
             var discoveredURLs = Set<URL>()
             var pagesCompleted = 0
@@ -182,6 +184,14 @@ struct CIAReadingRoomBrowserView: View {
                     guard documentRequests < 100 else { break }
                     try Task.checkCancellation()
                     documentRequests += 1
+                    job.pagesCompleted = pagesCompleted
+                    job.documentsDiscovered = discoveredURLs.count
+                    job.completionPercentage = min(
+                        99,
+                        Int((Double(documentRequests) / Double(max(1, query.maximumDocumentRequests))) * 100)
+                    )
+                    job.updatedAt = .now
+                    try? modelContext.save()
                     progressText = "Page \(pagesCompleted) of \(pagesToImport): metadata \(documentRequests) of up to \(min(100, pagesToImport * 20))…"
                     if documentRequests > 1 {
                         try await Task.sleep(for: .seconds(Double.random(in: 2.5...5.0)))
@@ -192,6 +202,9 @@ struct CIAReadingRoomBrowserView: View {
                         sourceURL: result.documentURL
                     ) {
                         records.append(record)
+                        job.documentsParsed = records.count
+                        job.updatedAt = .now
+                        try? modelContext.save()
                     }
                 }
 
@@ -215,6 +228,7 @@ struct CIAReadingRoomBrowserView: View {
             job.pagesCompleted = pagesCompleted
             job.documentsDiscovered = discoveredURLs.count
             job.documentsParsed = records.count
+            job.completionPercentage = 100
             job.status = records.isEmpty ? .failed : .completed
             job.updatedAt = .now
 
@@ -231,6 +245,10 @@ struct CIAReadingRoomBrowserView: View {
 
             try modelContext.save()
             progressText = "Saved \(records.count) documents from \(pagesCompleted) page\(pagesCompleted == 1 ? "" : "s") and Metadata TSV"
+            ScrapeNotificationManager.shared.notifyCompletion(
+                searchName: queryName,
+                documentCount: records.count
+            )
             importComplete = true
         } catch {
             errorMessage = error.localizedDescription

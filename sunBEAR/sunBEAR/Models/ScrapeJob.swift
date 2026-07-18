@@ -12,6 +12,7 @@ final class ScrapeJob {
     var pagesCompleted: Int
     var documentsDiscovered: Int
     var documentsParsed: Int
+    var completionPercentage: Int = 0
     var pdfsDownloaded: Int
     var searchJSON: Data
     var lastErrorMessage: String?
@@ -30,6 +31,7 @@ final class ScrapeJob {
         pagesCompleted = 0
         documentsDiscovered = 0
         documentsParsed = 0
+        completionPercentage = 0
         pdfsDownloaded = 0
         searchJSON = (try? JSONEncoder().encode(query)) ?? Data()
         documents = []

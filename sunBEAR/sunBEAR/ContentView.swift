@@ -121,6 +121,20 @@ struct ContentView: View {
                                     }
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
+
+                                    if job.status == .running || job.status == .queued {
+                                        HStack(spacing: 8) {
+                                            ProgressView(value: Double(job.completionPercentage), total: 100)
+                                                .frame(maxWidth: 180)
+                                            Text("\(job.completionPercentage)%")
+                                                .font(.caption.monospacedDigit())
+                                                .foregroundStyle(.secondary)
+                                                .frame(width: 36, alignment: .trailing)
+                                        }
+                                        .accessibilityElement(children: .combine)
+                                        .accessibilityLabel("Scrape progress")
+                                        .accessibilityValue("\(job.completionPercentage) percent")
+                                    }
                                 }
                                 .padding(.vertical, 4)
                             }
@@ -176,6 +190,7 @@ struct ContentView: View {
 
     @MainActor
     private func runSearch() async {
+        await ScrapeNotificationManager.shared.requestAuthorization()
         var query = CIASearchQuery()
         query.searchTerms = searchTerms
         query.maximumPages = maximumPages
@@ -197,6 +212,8 @@ struct ContentView: View {
                     job.pagesCompleted = progress.pagesCompleted
                     job.documentsDiscovered = progress.documentsDiscovered
                     job.documentsParsed = progress.documentsParsed
+                    let documentBudget = max(1, query.maximumDocumentRequests)
+                    job.completionPercentage = min(99, Int((Double(progress.documentsParsed) / Double(documentBudget)) * 100))
                     job.updatedAt = .now
                     progressText = "Page \(progress.pagesCompleted): parsed \(progress.documentsParsed) of \(progress.documentsDiscovered) documents"
                     try? modelContext.save()
@@ -211,6 +228,7 @@ struct ContentView: View {
             job.pagesCompleted = result.pagesCompleted
             job.documentsDiscovered = result.records.count
             job.documentsParsed = result.records.count
+            job.completionPercentage = 100
             job.status = .completed
             job.updatedAt = .now
 
@@ -227,6 +245,10 @@ struct ContentView: View {
 
             try modelContext.save()
             progressText = "Completed: saved \(result.records.count) documents"
+            ScrapeNotificationManager.shared.notifyCompletion(
+                searchName: job.displayName,
+                documentCount: result.records.count
+            )
         } catch {
             job.status = job.documentsParsed > 0 ? .partial : .failed
             job.lastErrorMessage = error.localizedDescription
