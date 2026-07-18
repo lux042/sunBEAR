@@ -30,6 +30,8 @@ struct ContentView: View {
             }
             .navigationTitle("sunBEAR")
             .navigationSplitViewColumnWidth(min: 180, ideal: 210)
+            .scrollContentBackground(.hidden)
+            .background(Color.sunBearNavy)
         } detail: {
             switch selection ?? .search {
             case .search:
@@ -38,6 +40,9 @@ struct ContentView: View {
                 libraryView
             }
         }
+        .tint(.sunBearGold)
+        .preferredColorScheme(.dark)
+        .background(Color.sunBearNavy)
     }
 
     private var searchView: some View {
@@ -66,6 +71,8 @@ struct ContentView: View {
             }
         }
         .formStyle(.grouped)
+        .scrollContentBackground(.hidden)
+        .background(Color.sunBearNavy)
         .navigationTitle("Search")
         .frame(minWidth: 520, minHeight: 400)
         .alert("Large CIA Search", isPresented: $showLargeSearchWarning) {
@@ -129,6 +136,8 @@ struct ContentView: View {
                     }
                     .onDelete(perform: deleteJobs)
                 }
+                .scrollContentBackground(.hidden)
+                .background(Color.sunBearNavy)
             }
         }
         .navigationTitle("Library")
@@ -352,6 +361,8 @@ private struct LibraryJobDetailView: View {
             }
         }
         .navigationTitle(job.displayName)
+        .scrollContentBackground(.hidden)
+        .background(Color.sunBearNavy)
         .toolbar {
             ToolbarItem(placement: .navigation) {
                 Button("Back to Library", systemImage: "chevron.left") {
@@ -363,7 +374,6 @@ private struct LibraryJobDetailView: View {
 }
 
 private struct SavedDocumentDetailView: View {
-    @Environment(\.dismiss) private var dismiss
     let document: SavedCIADocument
 
     var body: some View {
@@ -401,16 +411,16 @@ private struct SavedDocumentDetailView: View {
             }
         }
         .navigationTitle(document.title)
-        .toolbar {
-            ToolbarItem(placement: .navigation) {
-                Button("Back", systemImage: "chevron.left") {
-                    dismiss()
-                }
-            }
-        }
+        .scrollContentBackground(.hidden)
+        .background(Color.sunBearNavy)
     }
 
     private func metadataRow(_ label: String, _ value: String?) -> some View {
         LabeledContent(label, value: value ?? "—")
     }
+}
+
+extension Color {
+    static let sunBearNavy = Color(red: 0.035, green: 0.075, blue: 0.14)
+    static let sunBearGold = Color(red: 0.95, green: 0.60, blue: 0.09)
 }

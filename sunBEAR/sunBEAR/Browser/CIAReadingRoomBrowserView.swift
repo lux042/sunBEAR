@@ -127,6 +127,8 @@ struct CIAReadingRoomBrowserView: View {
             CIAWebView(session: session)
         }
         .frame(minWidth: 900, minHeight: 650)
+        .background(Color.sunBearNavy)
+        .tint(.sunBearGold)
         .alert("Metadata Saved", isPresented: $importComplete) {
             Button("Done") { dismiss() }
         } message: {
