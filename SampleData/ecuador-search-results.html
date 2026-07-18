@@ -1,0 +1,761 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML+RDFa 1.0//EN"
+  "http://www.w3.org/MarkUp/DTD/xhtml-rdfa-1.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" version="XHTML+RDFa 1.0" dir="ltr"
+  xmlns:content="http://purl.org/rss/1.0/modules/content/"
+  xmlns:dc="http://purl.org/dc/terms/"
+  xmlns:foaf="http://xmlns.com/foaf/0.1/"
+  xmlns:og="http://ogp.me/ns#"
+  xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+  xmlns:sioc="http://rdfs.org/sioc/ns#"
+  xmlns:sioct="http://rdfs.org/sioc/types#"
+  xmlns:skos="http://www.w3.org/2004/02/skos/core#"
+  xmlns:xsd="http://www.w3.org/2001/XMLSchema#">
+
+<!--[if lt IE 7]> <html class="no-js lt-ie9 lt-ie8 lt-ie7" lang="en"> <![endif]-->
+<!--[if IE 7]>    <html class="no-js lt-ie9 lt-ie8" lang="en"> <![endif]-->
+<!--[if IE 8]>    <html class="no-js lt-ie9" lang="en"> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en"> <!--<![endif]-->
+
+<head profile="http://www.w3.org/1999/xhtml/vocab">
+  <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1" />
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="Generator" content="Drupal 7 (http://drupal.org)" />
+<link rel="shortcut icon" href="https://www.cia.gov/readingroom/sites/all/themes/foia_theme/favicon.ico" type="image/vnd.microsoft.icon" />
+  <meta http-equiv="onion-location" content="http://ciadotgov4sjwlzihbbgxnqg3xiyrg7so2r2o3lt5wz5ypk4sxyjstad.onion" /><title>Advanced Search | CIA FOIA (foia.cia.gov)</title>
+  <style type="text/css" media="all">
+@import url("https://www.cia.gov/readingroom/modules/system/system.base.css?tb2w2i");
+@import url("https://www.cia.gov/readingroom/modules/system/system.menus.css?tb2w2i");
+@import url("https://www.cia.gov/readingroom/modules/system/system.messages.css?tb2w2i");
+@import url("https://www.cia.gov/readingroom/modules/system/system.theme.css?tb2w2i");
+</style>
+<style type="text/css" media="all">
+@import url("https://www.cia.gov/readingroom/sites/all/modules/contrib/advanced_search_block/advanced_search_block.css?tb2w2i");
+@import url("https://www.cia.gov/readingroom/modules/field/theme/field.css?tb2w2i");
+@import url("https://www.cia.gov/readingroom/modules/node/node.css?tb2w2i");
+@import url("https://www.cia.gov/readingroom/modules/search/search.css?tb2w2i");
+@import url("https://www.cia.gov/readingroom/modules/user/user.css?tb2w2i");
+@import url("https://www.cia.gov/readingroom/sites/all/modules/contrib/views/css/views.css?tb2w2i");
+@import url("https://www.cia.gov/readingroom/sites/all/modules/contrib/media/modules/media_wysiwyg/css/media_wysiwyg.base.css?tb2w2i");
+</style>
+<style type="text/css" media="all">
+@import url("https://www.cia.gov/readingroom/sites/all/modules/contrib/request_status/css/reqsta.css?tb2w2i");
+@import url("https://www.cia.gov/readingroom/sites/all/modules/contrib/ctools/css/ctools.css?tb2w2i");
+@import url("https://www.cia.gov/readingroom/sites/all/modules/contrib/wysiwyg_linebreaks/wysiwyg_linebreaks.css?tb2w2i");
+</style>
+<link type="text/css" rel="stylesheet" href="//cdn.jsdelivr.net/qtip2/2.2.0/jquery.qtip.min.css" media="all" />
+<style type="text/css" media="all">
+<!--/*--><![CDATA[/*><!--*/
+.html .qtip{max-width:none;}.html .qtip-content{height:100%;}
+
+/*]]>*/-->
+</style>
+<style type="text/css" media="all">
+@import url("https://www.cia.gov/readingroom/sites/all/modules/contrib/text_resize/text_resize.css?tb2w2i");
+</style>
+<style type="text/css" media="all">
+@import url("https://www.cia.gov/readingroom/sites/all/themes/foia_theme/css/foia_wrapper/bootstrap.min.css?tb2w2i");
+@import url("https://www.cia.gov/readingroom/sites/all/themes/foia_theme/css/foia_wrapper/bootstrap-grid-4.5.0.css?tb2w2i");
+@import url("https://www.cia.gov/readingroom/sites/all/themes/foia_theme/css/foia_wrapper/wrapper.css?tb2w2i");
+@import url("https://www.cia.gov/readingroom/sites/all/themes/foia_theme/css/foia_wrapper/wrapper-footer.css?tb2w2i");
+@import url("https://www.cia.gov/readingroom/sites/all/themes/foia_theme/css/foia_wrapper/hamburger.css?tb2w2i");
+@import url("https://www.cia.gov/readingroom/sites/all/themes/foia_theme/css/new_css_b.css?tb2w2i");
+@import url("https://www.cia.gov/readingroom/sites/all/themes/foia_theme/css/new_custom.css?tb2w2i");
+@import url("https://www.cia.gov/readingroom/sites/all/themes/foia_theme/css/foia_err.css?tb2w2i");
+</style>
+<style type="text/css" media="print">
+@import url("https://www.cia.gov/readingroom/sites/all/themes/foia_theme/css/print.css?tb2w2i");
+</style>
+  <script type="text/javascript" src="https://www.cia.gov/readingroom/sites/all/modules/contrib/jquery_update/replace/jquery/1.10/jquery.min.js?v=1.10.2"></script>
+<script type="text/javascript" src="https://www.cia.gov/readingroom/misc/jquery-extend-3.4.0.js?v=1.10.2"></script>
+<script type="text/javascript" src="https://www.cia.gov/readingroom/misc/jquery-html-prefilter-3.5.0-backport.js?v=1.10.2"></script>
+<script type="text/javascript" src="https://www.cia.gov/readingroom/misc/jquery.once.js?v=1.2"></script>
+<script type="text/javascript" src="https://www.cia.gov/readingroom/misc/drupal.js?tb2w2i"></script>
+<script type="text/javascript" src="https://www.cia.gov/readingroom/sites/all/modules/contrib/jquery_update/replace/ui/external/jquery.cookie.js?v=67fb34f6a866c40d0570"></script>
+<script type="text/javascript" src="https://www.cia.gov/readingroom/sites/all/modules/contrib/apachesolr_sort/apachesolr_sort.js?tb2w2i"></script>
+<script type="text/javascript" src="https://www.cia.gov/readingroom/sites/all/modules/contrib/custom_search/js/custom_search.js?tb2w2i"></script>
+<script type="text/javascript" src="https://www.cia.gov/readingroom/sites/all/modules/contrib/ctools/js/dependent.js?tb2w2i"></script>
+<script type="text/javascript" src="//cdn.jsdelivr.net/qtip2/2.2.0/jquery.qtip.min.js"></script>
+<script type="text/javascript" src="https://www.cia.gov/readingroom/sites/all/modules/contrib/views_field_tooltip/js/views_field_tooltip.js?tb2w2i"></script>
+<script type="text/javascript">
+<!--//--><![CDATA[//><!--
+var text_resize_scope = "main";
+          var text_resize_minimum = "12";
+          var text_resize_maximum = "25";
+          var text_resize_line_height_allow = 1;
+          var text_resize_line_height_min = "16";
+          var text_resize_line_height_max = "36";
+//--><!]]>
+</script>
+<script type="text/javascript" src="https://www.cia.gov/readingroom/sites/all/modules/contrib/text_resize/text_resize.js?tb2w2i"></script>
+<script type="text/javascript">
+<!--//--><![CDATA[//><!--
+window.CKEDITOR_BASEPATH = '/readingroom/sites/all/libraries/ckeditor/'
+//--><!]]>
+</script>
+<script type="text/javascript" src="https://www.cia.gov/readingroom/sites/all/modules/contrib/facetapi/facetapi.js?tb2w2i"></script>
+<script type="text/javascript" src="https://www.cia.gov/readingroom/sites/all/themes/foia_theme/js/jquery-3.4.1.min.js?tb2w2i"></script>
+<script type="text/javascript" src="https://www.cia.gov/readingroom/sites/all/themes/foia_theme/js/bootstrap-4.0.0.min.js?tb2w2i"></script>
+<script type="text/javascript" src="https://www.cia.gov/readingroom/sites/all/themes/foia_theme/js/wrapper.js?tb2w2i"></script>
+<script type="text/javascript">
+<!--//--><![CDATA[//><!--
+jQuery.extend(Drupal.settings, {"basePath":"\/readingroom\/","pathPrefix":"","setHasJsCookie":0,"ajaxPageState":{"theme":"foia_theme","theme_token":"1tD3_oNk_D_pGUxOnBfICNO3HV4B4n9EVmiI8ixAJYQ","js":{"sites\/all\/modules\/contrib\/jquery_update\/replace\/jquery\/1.10\/jquery.min.js":1,"misc\/jquery-extend-3.4.0.js":1,"misc\/jquery-html-prefilter-3.5.0-backport.js":1,"misc\/jquery.once.js":1,"misc\/drupal.js":1,"sites\/all\/modules\/contrib\/jquery_update\/replace\/ui\/external\/jquery.cookie.js":1,"sites\/all\/modules\/contrib\/apachesolr_sort\/apachesolr_sort.js":1,"sites\/all\/modules\/contrib\/custom_search\/js\/custom_search.js":1,"sites\/all\/modules\/contrib\/ctools\/js\/dependent.js":1,"\/\/cdn.jsdelivr.net\/qtip2\/2.2.0\/jquery.qtip.min.js":1,"sites\/all\/modules\/contrib\/views_field_tooltip\/js\/views_field_tooltip.js":1,"0":1,"sites\/all\/modules\/contrib\/text_resize\/text_resize.js":1,"1":1,"sites\/all\/modules\/contrib\/facetapi\/facetapi.js":1,"sites\/all\/themes\/foia_theme\/js\/jquery-3.4.1.min.js":1,"sites\/all\/themes\/foia_theme\/js\/bootstrap-4.0.0.min.js":1,"sites\/all\/themes\/foia_theme\/js\/wrapper.js":1},"css":{"modules\/system\/system.base.css":1,"modules\/system\/system.menus.css":1,"modules\/system\/system.messages.css":1,"modules\/system\/system.theme.css":1,"sites\/all\/modules\/contrib\/advanced_search_block\/advanced_search_block.css":1,"modules\/field\/theme\/field.css":1,"modules\/node\/node.css":1,"modules\/search\/search.css":1,"modules\/user\/user.css":1,"sites\/all\/modules\/contrib\/views\/css\/views.css":1,"sites\/all\/modules\/contrib\/media\/modules\/media_wysiwyg\/css\/media_wysiwyg.base.css":1,"sites\/all\/modules\/contrib\/request_status\/css\/reqsta.css":1,"sites\/all\/modules\/contrib\/ctools\/css\/ctools.css":1,"sites\/all\/modules\/contrib\/wysiwyg_linebreaks\/wysiwyg_linebreaks.css":1,"\/\/cdn.jsdelivr.net\/qtip2\/2.2.0\/jquery.qtip.min.css":1,"0":1,"sites\/all\/modules\/contrib\/text_resize\/text_resize.css":1,"sites\/all\/themes\/foia_theme\/css\/foia_wrapper\/bootstrap.min.css":1,"sites\/all\/themes\/foia_theme\/css\/foia_wrapper\/bootstrap-grid-4.5.0.css":1,"sites\/all\/themes\/foia_theme\/css\/foia_wrapper\/wrapper.css":1,"sites\/all\/themes\/foia_theme\/css\/foia_wrapper\/wrapper-footer.css":1,"sites\/all\/themes\/foia_theme\/css\/foia_wrapper\/hamburger.css":1,"sites\/all\/themes\/foia_theme\/css\/new_css_b.css":1,"sites\/all\/themes\/foia_theme\/css\/new_custom.css":1,"sites\/all\/themes\/foia_theme\/css\/foia_err.css":1,"sites\/all\/themes\/foia_theme\/css\/print.css":1}},"custom_search":{"form_target":"_self","solr":1},"profile":"foia","profile_version":"7.x","CTools":{"dependent":{"edit-ds-field-pub-date-value":{"values":{"edit-ds-field-pub-date-op":["\u003C","\u003C=","=","!=","\u003E=","\u003E","regular_expression","not_regular_expression"]},"num":1,"type":"hide"},"edit-ds-field-pub-date-min":{"values":{"edit-ds-field-pub-date-op":["between","not between"]},"num":1,"type":"hide"},"edit-ds-field-pub-date-max":{"values":{"edit-ds-field-pub-date-op":["between","not between"]},"num":1,"type":"hide"}}},"urlIsAjaxTrusted":{"\/readingroom\/advanced-search-view":true},"viewsFieldTooltip":{"advanced_search_view":{"advanced_search_view":{"labels":[],"fields":{"label":[{"theme":"\u003Cimg class=\u0022views-field-tooltip-icon\u0022 typeof=\u0022foaf:Image\u0022 src=\u0022https:\/\/www.cia.gov\/readingroom\/sites\/all\/modules\/contrib\/views_field_tooltip\/images\/help.png\u0022 alt=\u0022\u0022 \/\u003E","qtip":{"content":"Document Number\/ESDN: CIA-RDP08C01297R000700110011-3 \u003Cbr \/\u003E\r\n CREST General CIA Records CIA-RDP08C01297R000700110011-3 RIPPUB C 3 December 27, 2016 October 2, 2012 11 July 24, 1945 REPORT Attachment Size CIA-RDP08C01297R000700110011-3.pdf 218.89 KB Declassified in Part- Sanitized Copy Approved for Release 2012\/12\/12: CIA-RDP08C01297R000700110011-3 MILITARY"}},{"theme":"\u003Cimg class=\u0022views-field-tooltip-icon\u0022 typeof=\u0022foaf:Image\u0022 src=\u0022https:\/\/www.cia.gov\/readingroom\/sites\/all\/modules\/contrib\/views_field_tooltip\/images\/help.png\u0022 alt=\u0022\u0022 \/\u003E","qtip":{"content":"Document Number\/ESDN: CIA-RDP08C01297R000700120008-6 \u003Cbr \/\u003E\r\n CREST General CIA Records CIA-RDP08C01297R000700120008-6 RIFPUB C 6 December 27, 2016 September 26, 2012 8 October 28, 1976 CABLE Attachment Size CIA-RDP08C01297R000700120008-6.pdf 452.06 KB Declassified and Approved For Release 2012\/12\/12: CIA-RDP08CO1297R000700120008-6* V t;-6 DftFaA\u0026amp; 4--i"}},{"theme":"\u003Cimg class=\u0022views-field-tooltip-icon\u0022 typeof=\u0022foaf:Image\u0022 src=\u0022https:\/\/www.cia.gov\/readingroom\/sites\/all\/modules\/contrib\/views_field_tooltip\/images\/help.png\u0022 alt=\u0022\u0022 \/\u003E","qtip":{"content":"Document Number\/ESDN: CIA-RDP08C01297R000700120006-8 \u003Cbr \/\u003E\r\n CREST General CIA Records CIA-RDP08C01297R000700120006-8 RIFPUB S 9 December 27, 2016 September 26, 2012 6 December 15, 1977 REPORT Attachment Size CIA-RDP08C01297R000700120006-8.pdf 528.4 KB Declas`ied and Approved For Release 2012\/12\/12: CIA-RDP08CO1297R000700120006-8 I NOT RELEASABLE TO FOREIGN"}},{"theme":"\u003Cimg class=\u0022views-field-tooltip-icon\u0022 typeof=\u0022foaf:Image\u0022 src=\u0022https:\/\/www.cia.gov\/readingroom\/sites\/all\/modules\/contrib\/views_field_tooltip\/images\/help.png\u0022 alt=\u0022\u0022 \/\u003E","qtip":{"content":"Document Number\/ESDN: CIA-RDP08C01297R000700120018-5 \u003Cbr \/\u003E\r\n CREST General CIA Records CIA-RDP08C01297R000700120018-5 RIFPUB K 14 December 22, 2016 September 26, 2012 18 December 17, 1963 MISC Attachment Size CIA-RDP08C01297R000700120018-5.pdf 644.97 KB A v Declassified and Approved For Release 2012\/09\/26:CIA-RDPCC8C01297R000700120018-5- II..1CF Declassified"}},{"theme":"\u003Cimg class=\u0022views-field-tooltip-icon\u0022 typeof=\u0022foaf:Image\u0022 src=\u0022https:\/\/www.cia.gov\/readingroom\/sites\/all\/modules\/contrib\/views_field_tooltip\/images\/help.png\u0022 alt=\u0022\u0022 \/\u003E","qtip":{"content":"Document Number\/ESDN: CIA-RDP79-00891A000700010001-5 \u003Cbr \/\u003E\r\n CREST General CIA Records CIA-RDP79-00891A000700010001-5 RIPPUB S 43 December 9, 2016 April 2, 2001 1 October 1, 1970 REPORT Attachment Size CIA-RDP79-00891A000700010001-5.pdf 1.59 MB Approved For Release 2001\/07\/16: CIA-RDP79-00891A000700010001-5 Secret No Foreign Dissem auador-- anuDoo Secret N2"}},{"theme":"\u003Cimg class=\u0022views-field-tooltip-icon\u0022 typeof=\u0022foaf:Image\u0022 src=\u0022https:\/\/www.cia.gov\/readingroom\/sites\/all\/modules\/contrib\/views_field_tooltip\/images\/help.png\u0022 alt=\u0022\u0022 \/\u003E","qtip":{"content":"Document Number\/ESDN: CIA-RDP82-00457R002100400009-9 \u003Cbr \/\u003E\r\n CREST General CIA Records CIA-RDP82-00457R002100400009-9 RIPPUB C 1 November 9, 2016 February 5, 1999 9 December 3, 1948 REPORT Attachment Size CIA-RDP82-00457R002100400009-9.pdf 59.04 KB CLASSIFICATION CO Approved For Rele r~A9L9~MLJG:E~PE RPEP82-00457 R0 02100400 INFORM\u0026amp;TION REPORT COUNTRY"}},{"theme":"\u003Cimg class=\u0022views-field-tooltip-icon\u0022 typeof=\u0022foaf:Image\u0022 src=\u0022https:\/\/www.cia.gov\/readingroom\/sites\/all\/modules\/contrib\/views_field_tooltip\/images\/help.png\u0022 alt=\u0022\u0022 \/\u003E","qtip":{"content":"Document Number\/ESDN: CIA-RDP85T00875R001600030002-6 \u003Cbr \/\u003E\r\n CREST General CIA Records CIA-RDP85T00875R001600030002-6 RIPPUB C 15 December 22, 2016 October 17, 2011 2 January 1, 1970 IM Attachment Size CIA-RDP85T00875R001600030002-6.pdf 696.63 KB Declassified in Part- Sanitized Copy Approved for Release 2011\/10\/31: CIA-RDP85T00875R001600030002-6 \u0026quot;-~ j C"}},{"theme":"\u003Cimg class=\u0022views-field-tooltip-icon\u0022 typeof=\u0022foaf:Image\u0022 src=\u0022https:\/\/www.cia.gov\/readingroom\/sites\/all\/modules\/contrib\/views_field_tooltip\/images\/help.png\u0022 alt=\u0022\u0022 \/\u003E","qtip":{"content":"Document Number\/ESDN: CIA-RDP08C01297R000700120007-7 \u003Cbr \/\u003E\r\n CREST General CIA Records CIA-RDP08C01297R000700120007-7 RIFPUB K 10 December 22, 2016 September 26, 2012 7 April 1, 1977 OPEN SOURCE Attachment Size CIA-RDP08C01297R000700120007-7.pdf 900.87 KB Declassified and Approved For Release 2012\/09\/26: CIA-R?D-1=08001297R000700120007-7? \u0026#039;, 7 4,, 14 I."}},{"theme":"\u003Cimg class=\u0022views-field-tooltip-icon\u0022 typeof=\u0022foaf:Image\u0022 src=\u0022https:\/\/www.cia.gov\/readingroom\/sites\/all\/modules\/contrib\/views_field_tooltip\/images\/help.png\u0022 alt=\u0022\u0022 \/\u003E","qtip":{"content":"Document Number\/ESDN: CIA-RDP08C01297R000700080006-3 \u003Cbr \/\u003E\r\n CREST General CIA Records CIA-RDP08C01297R000700080006-3 RIFPUB U 5 December 27, 2016 September 26, 2012 6 November 28, 1967 CABLE Attachment Size CIA-RDP08C01297R000700080006-3.pdf 395.38 KB I 2 1 DEP AR TMENT OF STATE 4444\u0026#039;r-0 JM Declassified and Approved For Release 2012\/12\/12: CIA"}},{"theme":"\u003Cimg class=\u0022views-field-tooltip-icon\u0022 typeof=\u0022foaf:Image\u0022 src=\u0022https:\/\/www.cia.gov\/readingroom\/sites\/all\/modules\/contrib\/views_field_tooltip\/images\/help.png\u0022 alt=\u0022\u0022 \/\u003E","qtip":{"content":"Document Number\/ESDN: CIA-RDP08C01297R000700120011-2 \u003Cbr \/\u003E\r\n CREST General CIA Records CIA-RDP08C01297R000700120011-2 RIPPUB U 21 December 22, 2016 September 26, 2012 11 March 2, 1970 CABLE Attachment Size CIA-RDP08C01297R000700120011-2.pdf 1.65 MB Declassified in Part- Sanitized CopyApproved for Release 2012\/09\/26: CIA-RDPO8C01297R00-670012(1)011-2 (\/LA\/L._"}},{"theme":"\u003Cimg class=\u0022views-field-tooltip-icon\u0022 typeof=\u0022foaf:Image\u0022 src=\u0022https:\/\/www.cia.gov\/readingroom\/sites\/all\/modules\/contrib\/views_field_tooltip\/images\/help.png\u0022 alt=\u0022\u0022 \/\u003E","qtip":{"content":"Document Number\/ESDN: CIA-RDP08C01297R000700120019-4 \u003Cbr \/\u003E\r\n CREST General CIA Records CIA-RDP08C01297R000700120019-4 RIFPUB C 9 December 27, 2016 September 26, 2012 19 September 7, 1963 CABLE Attachment Size CIA-RDP08C01297R000700120019-4.pdf 656.69 KB itt\/ACTION r. ^~- f?._,\u0026amp;\u0026amp; r I-..,+M, n 4a n m., CMY! t16 i i: A..J..._---.~.... f Declassified and"}},{"theme":"\u003Cimg class=\u0022views-field-tooltip-icon\u0022 typeof=\u0022foaf:Image\u0022 src=\u0022https:\/\/www.cia.gov\/readingroom\/sites\/all\/modules\/contrib\/views_field_tooltip\/images\/help.png\u0022 alt=\u0022\u0022 \/\u003E","qtip":{"content":"Document Number\/ESDN: CIA-RDP79T01003A002500010002-1 \u003Cbr \/\u003E\r\n CREST General CIA Records CIA-RDP79T01003A002500010002-1 RIPPUB S 10 November 16, 2016 November 29, 1999 2 November 30, 1965 PAPER Attachment Size CIA-RDP79T01003A002500010002-1.pdf 605.17 KB Approved For Release 2000\/04\/1 Division International Branch Latin America ~ 0-~~ X.~J CURRENT SuPPoRr"}},{"theme":"\u003Cimg class=\u0022views-field-tooltip-icon\u0022 typeof=\u0022foaf:Image\u0022 src=\u0022https:\/\/www.cia.gov\/readingroom\/sites\/all\/modules\/contrib\/views_field_tooltip\/images\/help.png\u0022 alt=\u0022\u0022 \/\u003E","qtip":{"content":"Document Number\/ESDN: CIA-RDP85T00875R001100100135-6 \u003Cbr \/\u003E\r\n CREST General CIA Records CIA-RDP85T00875R001100100135-6 RIPPUB S 16 December 21, 2016 November 6, 2008 135 November 22, 1971 IM Attachment Size CIA-RDP85T00875R001100100135-6.pdf 710.37 KB Approved For Release 2008\/11\/06: CIA-RDP85T00875RO01100100135-6 Secret 25X1 DIRECTORATE OF INTELLIGENCE"}},{"theme":"\u003Cimg class=\u0022views-field-tooltip-icon\u0022 typeof=\u0022foaf:Image\u0022 src=\u0022https:\/\/www.cia.gov\/readingroom\/sites\/all\/modules\/contrib\/views_field_tooltip\/images\/help.png\u0022 alt=\u0022\u0022 \/\u003E","qtip":{"content":"Document Number\/ESDN: CIA-RDP08C01297R000700080016-2 \u003Cbr \/\u003E\r\n CREST General CIA Records CIA-RDP08C01297R000700080016-2 RIPPUB C 5 December 27, 2016 September 26, 2012 16 August 27, 1952 MEMO Attachment Size CIA-RDP08C01297R000700080016-2.pdf 760.54 KB Declassified in Part- Sanitized Copy Approved for Release 2012\/12\/12: pouch d \u0026#039;6 3.;3 TATTimiguak."}},{"theme":"\u003Cimg class=\u0022views-field-tooltip-icon\u0022 typeof=\u0022foaf:Image\u0022 src=\u0022https:\/\/www.cia.gov\/readingroom\/sites\/all\/modules\/contrib\/views_field_tooltip\/images\/help.png\u0022 alt=\u0022\u0022 \/\u003E","qtip":{"content":"Document Number\/ESDN: CIA-RDP08C01297R000700110009-6 \u003Cbr \/\u003E\r\n CREST General CIA Records CIA-RDP08C01297R000700110009-6 RIFPUB C 6 December 22, 2016 October 2, 2012 9 March 20, 1948 MEMO Attachment Size CIA-RDP08C01297R000700110009-6.pdf 589.45 KB? Declassified and Approved For Release 2012\/10\/02: CIA-RDP08001297R000700110009-6 IELDRANDUM March 20, 1948"}},{"theme":"\u003Cimg class=\u0022views-field-tooltip-icon\u0022 typeof=\u0022foaf:Image\u0022 src=\u0022https:\/\/www.cia.gov\/readingroom\/sites\/all\/modules\/contrib\/views_field_tooltip\/images\/help.png\u0022 alt=\u0022\u0022 \/\u003E","qtip":{"content":"Document Number\/ESDN: CIA-RDP79-00891A001100120001-8 \u003Cbr \/\u003E\r\n CREST General CIA Records CIA-RDP79-00891A001100120001-8 RIPPUB S 24 December 12, 2016 February 25, 2002 1 May 1, 1972 REPORT Attachment Size CIA-RDP79-00891A001100120001-8.pdf 829.82 KB Approved For Release 200\/tlA-RDP79-00891A0011001 0001-8 iO;) No. 0562 May 1972 Update of Ecuador Handbook Please"}},{"theme":"\u003Cimg class=\u0022views-field-tooltip-icon\u0022 typeof=\u0022foaf:Image\u0022 src=\u0022https:\/\/www.cia.gov\/readingroom\/sites\/all\/modules\/contrib\/views_field_tooltip\/images\/help.png\u0022 alt=\u0022\u0022 \/\u003E","qtip":{"content":"Document Number\/ESDN: CIA-RDP08C01297R000700120017-6 \u003Cbr \/\u003E\r\n CREST General CIA Records CIA-RDP08C01297R000700120017-6 RIFPUB S 2 December 27, 2016 September 26, 2012 17 March 10, 1965 MISC Attachment Size CIA-RDP08C01297R000700120017-6.pdf 133.87 KB Declassified and Approved For Release 2012\/12\/12: CIA-RDP08C01297R000700120017-6 14 S E BOUNDARY DISPUTE"}},{"theme":"\u003Cimg class=\u0022views-field-tooltip-icon\u0022 typeof=\u0022foaf:Image\u0022 src=\u0022https:\/\/www.cia.gov\/readingroom\/sites\/all\/modules\/contrib\/views_field_tooltip\/images\/help.png\u0022 alt=\u0022\u0022 \/\u003E","qtip":{"content":"Document Number\/ESDN: CIA-RDP08C01297R000700120016-7 \u003Cbr \/\u003E\r\n CREST General CIA Records CIA-RDP08C01297R000700120016-7 RIFPUB S 22 December 27, 2016 September 26, 2012 16 May 1, 1966 MISC Attachment Size CIA-RDP08C01297R000700120016-7.pdf 837.95 KB Declassified and Approved For Release 2012\/12\/12: CIA-RDP08C01297R000700120016-7 Special Intelligence"}},{"theme":"\u003Cimg class=\u0022views-field-tooltip-icon\u0022 typeof=\u0022foaf:Image\u0022 src=\u0022https:\/\/www.cia.gov\/readingroom\/sites\/all\/modules\/contrib\/views_field_tooltip\/images\/help.png\u0022 alt=\u0022\u0022 \/\u003E","qtip":{"content":"Document Number\/ESDN: CIA-RDP08C01297R000700080004-5 \u003Cbr \/\u003E\r\n CREST General CIA Records CIA-RDP08C01297R000700080004-5 RIFPUB U 5 December 27, 2016 September 26, 2012 4 February 17, 1971 CABLE Attachment Size CIA-RDP08C01297R000700080004-5.pdf 266.87 KB?RIG IN\/ RetiM4Orr (j DEPARTMENT OF STATE 1 Declassified and Approved For Release 2012\/12\/12: CIA"}},{"theme":"\u003Cimg class=\u0022views-field-tooltip-icon\u0022 typeof=\u0022foaf:Image\u0022 src=\u0022https:\/\/www.cia.gov\/readingroom\/sites\/all\/modules\/contrib\/views_field_tooltip\/images\/help.png\u0022 alt=\u0022\u0022 \/\u003E","qtip":{"content":"Document Number\/ESDN: CIA-RDP08C01297R000700120013-0 \u003Cbr \/\u003E\r\n CREST General CIA Records CIA-RDP08C01297R000700120013-0 RIFPUB U 2 December 22, 2016 September 26, 2012 13 March 1, 1967 CABLE Attachment Size CIA-RDP08C01297R000700120013-0.pdf 149.29 KB nki9--\/0 L LS ullaam DEP AR TMaTliAaRtfAtfig%1P FC-4,440t___1) Declassified and Approved For Release 2012\/09"}}]},"style":"views_plugin_style_table","style_type":"table"}}},"facetapi":{"facets":[{"limit":"5","id":"facetapi-facet-apachesolrsolr-block-im-field-collection","searcher":"apachesolr@solr","realmName":"block","facetName":"im_field_collection","queryType":null,"widget":"facetapi_links","showMoreText":"Show more ","showFewerText":"Show fewer "},{"limit":"5","id":"facetapi-facet-apachesolrsolr-block-dm-field-release-date","searcher":"apachesolr@solr","realmName":"block","facetName":"dm_field_release_date","queryType":"date","widget":"facetapi_links","showMoreText":"Show more","showFewerText":"Show fewer"},{"limit":"10","id":"facetapi-facet-apachesolrsolr-block-created","searcher":"apachesolr@solr","realmName":"block","facetName":"created","queryType":null,"widget":"facetapi_links","showMoreText":"Show more","showFewerText":"Show fewer"}]}});
+//--><!]]>
+</script>
+  
+  <!--[if IE]><script type="text/javascript" src="js/ie.js"></script><![endif]-->
+</head>
+<body class="html not-front not-logged-in two-sidebars page-advanced-search-view section-library" >
+    <div id="wrapper">
+  <noscript>Javascript must be enabled for the correct page display</noscript>
+  <header id="header">
+    <div class="header-holder">
+
+      <div class="container-flex">
+        <div class="row main-navbar-wrapper my-auto">
+            <div class="col-12">
+                <div class="row main-navbar-wrapper-top">
+                    <div class="col-12 goto-wrapper my-auto text-center">
+                        <div class="goto my-auto main-navbar-utlity-link align-middle" onclick="location.href = 'https://www.cia.gov'">HOME</div>
+                    </div>
+                </div>
+                <div class="row flex-nowrap main-navbar-wrapper-bottom">
+                    <div class="col-3 my-auto float-left">
+                        <span class="navbar-underline nav-title" onclick="GoTo('readingroom/')"> <img src="/readingroom/sites/all/themes/foia_theme/images/bt/Glyph-FOIA.svg" class="nav-main-seal" />FOIA</span>
+                    </div>
+                    <div class="col-9 main-navbar-sub-wrapper my-auto">
+                        <div class="main-navbar my-auto">
+                            <ul class="main-navbar-menu">
+                                <li>
+                                    <a class="nav-link" href="/readingroom/foia_request">Submit Request</a>
+                                </li>
+                                <li>
+                                    <a class="nav-link" href="/readingroom/fees-and-waivers-foia">Fee Schedule</a>
+                                </li>
+                                <li>
+                                    <a class="nav-link" href="/readingroom/frequently-asked-questions">FAQs</a>
+                                </li>
+                                <li>
+                                    <a class="nav-link" href="/readingroom/search/site">Reading Room</a>
+                                </li>
+                                <li>
+                                    <a class="nav-link" href="/readingroom/what-electronic-reading-room">About</a>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="my-auto navbar-vertical-line">
+                            <div class="main-navbar text-center my-auto">
+                                <center>
+                                   <a class="nav-link" href="/readingroom/advanced-search-view">Search <img class='icon-ti-search' src='/readingroom/sites/all/themes/foia_theme/images/bt/ic_search.svg' /> </a>
+                                </center>
+                            </div>
+                            <div class="main-navbar-menu-icons">
+                                <img class='icon-ti-search hover-underline' onclick="GoTo('readingroom/advanced-search-view')" src='/readingroom/sites/all/themes/foia_theme/images/bt/ic_search.svg' />
+                                <button id="MainMenuOpen" class="hamburger hamburger--emphatic main-menu-icon" type="button" aria-label="Menu" aria-controls="navigation"> <span class="hamburger-box"> <span class="hamburger-inner"></span> </span> </button>
+                                <img id="MainMenuClose" src="/readingroom/sites/all/themes/foia_theme/images/bt/Menu-Close-NoBorder.svg" style="display:none" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="MenuOverlay" class="row nav-menu-overlay">
+                    <div class="col-12 my-auto" style="height:100%">
+
+                        <div class="menu-overlay-content-wrapper text-left">
+
+                            <div class="main-menu-list-wrapper">
+                                <ul class="main-menu-list">
+                                    <li class="main-menu-list-item foia-request top" onclick="GoTo('readingroom/foia_request')">
+                                        <span class="main-menu-list-item-text">Submit Request</span>
+                                    </li>
+                                    <li class="main-menu-list-item fee-schedule top" onclick="GoTo('readingroom/fees-and-waivers-foia')">
+                                        <span class="main-menu-list-item-text">Fee Schedule</span>
+                                    </li>
+                                    <li class="main-menu-list-item faqs top" onclick="GoTo('readingroom/frequently-asked-questions')">
+                                        <span class="main-menu-list-item-text">FAQs</span>
+                                    </li>
+                                    <li class="main-menu-list-item reading-room top" onclick="GoTo('readingroom/search/site')">
+                                        <span class="main-menu-list-item-text">Reading Room</span>
+                                    </li>
+                                    <li class="main-menu-list-item about top" onclick="GoTo('readingroom/what-electronic-reading-room')">
+                                        <span class="main-menu-list-item-text">About</span>
+                                    </li>
+                                </ul>
+                            </div>
+
+                            <div class="row body-line-divider">
+                                <div class="col-lg-12"></div>
+                            </div>
+
+                            <div class="main-menu-list-wrapper">
+                                <ul class="main-menu-list">
+                                    <li class="main-menu-list-item nav-search" onclick="GoTo('readingroom/advanced-search-view')">
+                                        <span class="main-menu-list-item-text bottom">Search</span>
+                                        <span class="main-menu-list-item-icon my-auto"> <img class='icon-ti-search' src='/readingroom/sites/all/themes/foia_theme/images/bt/ic_search.svg' /> </span>
+                                    </li>
+                                </ul>
+                            </div>
+
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+      </div>
+
+
+    </div>
+  </header>
+  <div class="main-block">
+    <section id="main">
+<!--      <div class="heading-panel">
+        <h1>Library</h1>
+      </div>  -->
+      <div class="main-holder">
+        <div id="sidebar">
+          <nav class="sidebar-nav">
+            <h2 class="visuallyhidden">Secondary Navigation</h2>
+            <ul>
+                <div class="region region-sidebar-first">
+    <div id="block-menu-menu-library" class="block block-menu clearfix">
+
+    <h2 class="title">Library</h2>
+  
+  <div class="content">
+    <ul class="menu"><li class="first last expanded"><a href="/readingroom/" title="">Freedom of Information Act Electronic Reading Room</a><ul class="menu"><li class="first collapsed"><a href="/readingroom/what-electronic-reading-room">Requestor Portal</a></li>
+<li class="last collapsed"><a href="/readingroom/historical-collections">Historical Collections</a></li>
+</ul></li>
+</ul>  </div>
+</div>
+  </div>
+            </ul>
+          </nav>
+        </div>
+        <div id="content">
+                    <div class="portal-breadcrumbs">
+<!--            <ul class="breadcrumbs" dir="ltr">
+              <li><a href="https://www.cia.gov/">CIA Home</a></li>
+              <li><a href="https://www.cia.gov/library">Library</a></li>
+              <li><a href="/readingroom/">Electronic Reading Room</a></li>  -->
+              <!-- -comment out breadcrumb Beacause titles are to long on documents- -->
+<!--                                                   
+            </ul>                                                                     -->
+              <div class="region region-search-bar">
+    <div id="block-block-2" class="block block-block clearfix">
+
+    
+  <div class="content">
+    <p><a href="/readingroom/search/node">Browse the Collections</a> | <a href="/readingroom/advanced-search-view">Advanced Search</a> | <a href="/readingroom/search-help">Search Help </a></p>
+  </div>
+</div>
+<div id="block-text-resize-0" class="block block-text-resize clearfix">
+
+    
+  <div class="content">
+    <a href="javascript:;" class="changer" id="text_resize_decrease"><sup>-</sup>A</a> <a href="javascript:;" class="changer" id="text_resize_reset">A</a> <a href="javascript:;" class="changer" id="text_resize_increase"><sup>+</sup>A</a><div id="text_resize_clear"></div>  </div>
+</div>
+  </div>
+          </div>                                                                     
+          <article class="description-box">
+<!--            <a id="main-content" tabindex="-1">&nbsp;</a>                        -->
+            <div class="text-holder-full">
+              <div class="documentContent" id="region-content">
+<!--                <a name="documentContent"></a>                                    -->
+                <h1 class="documentFirstHeading">Advanced Search</h1>
+                                                                  <div id="sidebar-second" class="sidebar">
+                      <div class="region region-sidebar-second">
+    <div id="block-current-search-standard" class="block block-current-search clearfix">
+
+    <h2 class="title">FOIA</h2>
+  
+  <div class="content">
+    <div class="current-search-item current-search-item-active current-search-item-active-items"><div class="item-list"><ul class=""><li class="first last">ecuador</li>
+</ul></div></div><div class="current-search-item current-search-item-text current-search-item-results">Search found 5452 items</div>  </div>
+</div>
+<div id="block-facetapi-mvwwa7wt7ihcocvp1wvjky83w7wph8uy" class="block block-facetapi clearfix">
+
+    <h2 class="title">Filter by collection:</h2>
+  
+  <div class="content">
+    <div class="item-list"><ul class="facetapi-facetapi-links facetapi-facet-im-field-collection" id="facetapi-facet-apachesolrsolr-block-im-field-collection"><li class="leaf first"><a href="/readingroom/advanced-search-view?keyword=ecuador&amp;ds_field_pub_date_op=%3D&amp;ds_field_pub_date%5Bvalue%5D=&amp;ds_field_pub_date%5Bmin%5D=&amp;ds_field_pub_date%5Bmax%5D=&amp;f%5B0%5D=im_field_collection%3A2063099" class="facetapi-inactive active" rel="nofollow" id="facetapi-link--39">Argentina Declassification Project - The "Dirty War" (1976-83) (25)<span class="element-invisible"> Apply Argentina Declassification Project - The &quot;Dirty War&quot; (1976-83) filter </span></a></li>
+<li class="leaf"><a href="/readingroom/advanced-search-view?keyword=ecuador&amp;ds_field_pub_date_op=%3D&amp;ds_field_pub_date%5Bvalue%5D=&amp;ds_field_pub_date%5Bmin%5D=&amp;ds_field_pub_date%5Bmax%5D=&amp;f%5B0%5D=im_field_collection%3A724281" class="facetapi-inactive active" rel="nofollow" id="facetapi-link--40">Atomic Spies: Ethel and Julius Rosenberg (1)<span class="element-invisible"> Apply Atomic Spies: Ethel and Julius Rosenberg filter </span></a></li>
+<li class="leaf"><a href="/readingroom/advanced-search-view?keyword=ecuador&amp;ds_field_pub_date_op=%3D&amp;ds_field_pub_date%5Bvalue%5D=&amp;ds_field_pub_date%5Bmin%5D=&amp;ds_field_pub_date%5Bmax%5D=&amp;f%5B0%5D=im_field_collection%3A4186" class="facetapi-inactive active" rel="nofollow" id="facetapi-link--41">Bay of Pigs Release (1)<span class="element-invisible"> Apply Bay of Pigs Release filter </span></a></li>
+<li class="leaf"><a href="/readingroom/advanced-search-view?keyword=ecuador&amp;ds_field_pub_date_op=%3D&amp;ds_field_pub_date%5Bvalue%5D=&amp;ds_field_pub_date%5Bmin%5D=&amp;ds_field_pub_date%5Bmax%5D=&amp;f%5B0%5D=im_field_collection%3A1817859" class="facetapi-inactive active" rel="nofollow" id="facetapi-link--42">Bosnia, Intelligence, and the Clinton Presidency (1)<span class="element-invisible"> Apply Bosnia, Intelligence, and the Clinton Presidency filter </span></a></li>
+<li class="leaf"><a href="/readingroom/advanced-search-view?keyword=ecuador&amp;ds_field_pub_date_op=%3D&amp;ds_field_pub_date%5Bvalue%5D=&amp;ds_field_pub_date%5Bmin%5D=&amp;ds_field_pub_date%5Bmax%5D=&amp;f%5B0%5D=im_field_collection%3A1834880" class="facetapi-inactive active" rel="nofollow" id="facetapi-link--43">Consolidated Translations (142)<span class="element-invisible"> Apply Consolidated Translations filter </span></a></li>
+<li class="leaf"><a href="/readingroom/advanced-search-view?keyword=ecuador&amp;ds_field_pub_date_op=%3D&amp;ds_field_pub_date%5Bvalue%5D=&amp;ds_field_pub_date%5Bmin%5D=&amp;ds_field_pub_date%5Bmax%5D=&amp;f%5B0%5D=im_field_collection%3A2062990" class="facetapi-inactive active" rel="nofollow" id="facetapi-link--44">Current/Central Intelligence Bulletin Collection (65)<span class="element-invisible"> Apply Current/Central Intelligence Bulletin Collection filter </span></a></li>
+<li class="leaf"><a href="/readingroom/advanced-search-view?keyword=ecuador&amp;ds_field_pub_date_op=%3D&amp;ds_field_pub_date%5Bvalue%5D=&amp;ds_field_pub_date%5Bmin%5D=&amp;ds_field_pub_date%5Bmax%5D=&amp;f%5B0%5D=im_field_collection%3A2062587" class="facetapi-inactive active" rel="nofollow" id="facetapi-link--45">Daily Summary Collection (20)<span class="element-invisible"> Apply Daily Summary Collection filter </span></a></li>
+<li class="leaf"><a href="/readingroom/advanced-search-view?keyword=ecuador&amp;ds_field_pub_date_op=%3D&amp;ds_field_pub_date%5Bvalue%5D=&amp;ds_field_pub_date%5Bmin%5D=&amp;ds_field_pub_date%5Bmax%5D=&amp;f%5B0%5D=im_field_collection%3A2065192" class="facetapi-inactive active" rel="nofollow" id="facetapi-link--46">Fall of the Libyan Monarchy (2)<span class="element-invisible"> Apply Fall of the Libyan Monarchy filter </span></a></li>
+<li class="leaf"><a href="/readingroom/advanced-search-view?keyword=ecuador&amp;ds_field_pub_date_op=%3D&amp;ds_field_pub_date%5Bvalue%5D=&amp;ds_field_pub_date%5Bmin%5D=&amp;ds_field_pub_date%5Bmax%5D=&amp;f%5B0%5D=im_field_collection%3A89801" class="facetapi-inactive active" rel="nofollow" id="facetapi-link--47">FOIA Collection (153)<span class="element-invisible"> Apply FOIA Collection filter </span></a></li>
+<li class="leaf"><a href="/readingroom/advanced-search-view?keyword=ecuador&amp;ds_field_pub_date_op=%3D&amp;ds_field_pub_date%5Bvalue%5D=&amp;ds_field_pub_date%5Bmin%5D=&amp;ds_field_pub_date%5Bmax%5D=&amp;f%5B0%5D=im_field_collection%3A1834881" class="facetapi-inactive active" rel="nofollow" id="facetapi-link--48">General CIA Records (4570)<span class="element-invisible"> Apply General CIA Records filter </span></a></li>
+<li class="leaf"><a href="/readingroom/advanced-search-view?keyword=ecuador&amp;ds_field_pub_date_op=%3D&amp;ds_field_pub_date%5Bvalue%5D=&amp;ds_field_pub_date%5Bmin%5D=&amp;ds_field_pub_date%5Bmax%5D=&amp;f%5B0%5D=im_field_collection%3A1834882" class="facetapi-inactive active" rel="nofollow" id="facetapi-link--49">Ground Photo Caption Cards (1)<span class="element-invisible"> Apply Ground Photo Caption Cards filter </span></a></li>
+<li class="leaf"><a href="/readingroom/advanced-search-view?keyword=ecuador&amp;ds_field_pub_date_op=%3D&amp;ds_field_pub_date%5Bvalue%5D=&amp;ds_field_pub_date%5Bmin%5D=&amp;ds_field_pub_date%5Bmax%5D=&amp;f%5B0%5D=im_field_collection%3A1700319" class="facetapi-inactive active" rel="nofollow" id="facetapi-link--50">Intelligence, Policy, and Politics: The DCI, the White House, and Congress (3)<span class="element-invisible"> Apply Intelligence, Policy, and Politics: The DCI, the White House, and Congress filter </span></a></li>
+<li class="leaf"><a href="/readingroom/advanced-search-view?keyword=ecuador&amp;ds_field_pub_date_op=%3D&amp;ds_field_pub_date%5Bvalue%5D=&amp;ds_field_pub_date%5Bmin%5D=&amp;ds_field_pub_date%5Bmax%5D=&amp;f%5B0%5D=im_field_collection%3A1834883" class="facetapi-inactive active" rel="nofollow" id="facetapi-link--51">JPRS (89)<span class="element-invisible"> Apply JPRS filter </span></a></li>
+<li class="leaf"><a href="/readingroom/advanced-search-view?keyword=ecuador&amp;ds_field_pub_date_op=%3D&amp;ds_field_pub_date%5Bvalue%5D=&amp;ds_field_pub_date%5Bmin%5D=&amp;ds_field_pub_date%5Bmax%5D=&amp;f%5B0%5D=im_field_collection%3A1834884" class="facetapi-inactive active" rel="nofollow" id="facetapi-link--52">Library of Congress (32)<span class="element-invisible"> Apply Library of Congress filter </span></a></li>
+<li class="leaf"><a href="/readingroom/advanced-search-view?keyword=ecuador&amp;ds_field_pub_date_op=%3D&amp;ds_field_pub_date%5Bvalue%5D=&amp;ds_field_pub_date%5Bmin%5D=&amp;ds_field_pub_date%5Bmax%5D=&amp;f%5B0%5D=im_field_collection%3A1705143" class="facetapi-inactive active" rel="nofollow" id="facetapi-link--53">Nazi War Crimes Disclosure Act (42)<span class="element-invisible"> Apply Nazi War Crimes Disclosure Act filter </span></a></li>
+<li class="leaf"><a href="/readingroom/advanced-search-view?keyword=ecuador&amp;ds_field_pub_date_op=%3D&amp;ds_field_pub_date%5Bvalue%5D=&amp;ds_field_pub_date%5Bmin%5D=&amp;ds_field_pub_date%5Bmax%5D=&amp;f%5B0%5D=im_field_collection%3A1834885" class="facetapi-inactive active" rel="nofollow" id="facetapi-link--54">NGA Records (Formerly NIMA) (8)<span class="element-invisible"> Apply NGA Records (Formerly NIMA) filter </span></a></li>
+<li class="leaf"><a href="/readingroom/advanced-search-view?keyword=ecuador&amp;ds_field_pub_date_op=%3D&amp;ds_field_pub_date%5Bvalue%5D=&amp;ds_field_pub_date%5Bmin%5D=&amp;ds_field_pub_date%5Bmax%5D=&amp;f%5B0%5D=im_field_collection%3A1834886" class="facetapi-inactive active" rel="nofollow" id="facetapi-link--55">NIS (14)<span class="element-invisible"> Apply NIS filter </span></a></li>
+<li class="leaf"><a href="/readingroom/advanced-search-view?keyword=ecuador&amp;ds_field_pub_date_op=%3D&amp;ds_field_pub_date%5Bvalue%5D=&amp;ds_field_pub_date%5Bmin%5D=&amp;ds_field_pub_date%5Bmax%5D=&amp;f%5B0%5D=im_field_collection%3A1834887" class="facetapi-inactive active" rel="nofollow" id="facetapi-link--56">OSS Collection (3)<span class="element-invisible"> Apply OSS Collection filter </span></a></li>
+<li class="leaf"><a href="/readingroom/advanced-search-view?keyword=ecuador&amp;ds_field_pub_date_op=%3D&amp;ds_field_pub_date%5Bvalue%5D=&amp;ds_field_pub_date%5Bmin%5D=&amp;ds_field_pub_date%5Bmax%5D=&amp;f%5B0%5D=im_field_collection%3A1827265" class="facetapi-inactive active" rel="nofollow" id="facetapi-link--57">President's Daily Brief 1961-1969 (175)<span class="element-invisible"> Apply President&#039;s Daily Brief 1961-1969 filter </span></a></li>
+<li class="leaf"><a href="/readingroom/advanced-search-view?keyword=ecuador&amp;ds_field_pub_date_op=%3D&amp;ds_field_pub_date%5Bvalue%5D=&amp;ds_field_pub_date%5Bmin%5D=&amp;ds_field_pub_date%5Bmax%5D=&amp;f%5B0%5D=im_field_collection%3A1829819" class="facetapi-inactive active" rel="nofollow" id="facetapi-link--58">President's Daily Brief 1969-1977 (52)<span class="element-invisible"> Apply President&#039;s Daily Brief 1969-1977 filter </span></a></li>
+<li class="leaf"><a href="/readingroom/advanced-search-view?keyword=ecuador&amp;ds_field_pub_date_op=%3D&amp;ds_field_pub_date%5Bvalue%5D=&amp;ds_field_pub_date%5Bmin%5D=&amp;ds_field_pub_date%5Bmax%5D=&amp;f%5B0%5D=im_field_collection%3A1821105" class="facetapi-inactive active" rel="nofollow" id="facetapi-link--59">President Carter and the Role of Intelligence in the Camp David Accords (2)<span class="element-invisible"> Apply President Carter and the Role of Intelligence in the Camp David Accords filter </span></a></li>
+<li class="leaf"><a href="/readingroom/advanced-search-view?keyword=ecuador&amp;ds_field_pub_date_op=%3D&amp;ds_field_pub_date%5Bvalue%5D=&amp;ds_field_pub_date%5Bmin%5D=&amp;ds_field_pub_date%5Bmax%5D=&amp;f%5B0%5D=im_field_collection%3A1699355" class="facetapi-inactive active" rel="nofollow" id="facetapi-link--60">President Nixon and the Role of Intelligence in the 1973 Arab-Israeli War (6)<span class="element-invisible"> Apply President Nixon and the Role of Intelligence in the 1973 Arab-Israeli War filter </span></a></li>
+<li class="leaf"><a href="/readingroom/advanced-search-view?keyword=ecuador&amp;ds_field_pub_date_op=%3D&amp;ds_field_pub_date%5Bvalue%5D=&amp;ds_field_pub_date%5Bmin%5D=&amp;ds_field_pub_date%5Bmax%5D=&amp;f%5B0%5D=im_field_collection%3A17" class="facetapi-inactive active" rel="nofollow" id="facetapi-link--61">Reagan Collection (1)<span class="element-invisible"> Apply Reagan Collection filter </span></a></li>
+<li class="leaf"><a href="/readingroom/advanced-search-view?keyword=ecuador&amp;ds_field_pub_date_op=%3D&amp;ds_field_pub_date%5Bvalue%5D=&amp;ds_field_pub_date%5Bmin%5D=&amp;ds_field_pub_date%5Bmax%5D=&amp;f%5B0%5D=im_field_collection%3A2078603" class="facetapi-inactive active" rel="nofollow" id="facetapi-link--62">Records Related to the Assassination of Reverend Dr. Martin Luther King, Jr. (2)<span class="element-invisible"> Apply Records Related to the Assassination of Reverend Dr. Martin Luther King, Jr. filter </span></a></li>
+<li class="leaf"><a href="/readingroom/advanced-search-view?keyword=ecuador&amp;ds_field_pub_date_op=%3D&amp;ds_field_pub_date%5Bvalue%5D=&amp;ds_field_pub_date%5Bmin%5D=&amp;ds_field_pub_date%5Bmax%5D=&amp;f%5B0%5D=im_field_collection%3A2078604" class="facetapi-inactive active" rel="nofollow" id="facetapi-link--63">Records Related to the Assassination of Reverend Dr. Martin Luther King, Jr. (3)<span class="element-invisible"> Apply Records Related to the Assassination of Reverend Dr. Martin Luther King, Jr. filter </span></a></li>
+<li class="leaf"><a href="/readingroom/advanced-search-view?keyword=ecuador&amp;ds_field_pub_date_op=%3D&amp;ds_field_pub_date%5Bvalue%5D=&amp;ds_field_pub_date%5Bmin%5D=&amp;ds_field_pub_date%5Bmax%5D=&amp;f%5B0%5D=im_field_collection%3A2078398" class="facetapi-inactive active" rel="nofollow" id="facetapi-link--64">Records Related to the Assassination of Senator Robert F. Kennedy (1)<span class="element-invisible"> Apply Records Related to the Assassination of Senator Robert F. Kennedy filter </span></a></li>
+<li class="leaf"><a href="/readingroom/advanced-search-view?keyword=ecuador&amp;ds_field_pub_date_op=%3D&amp;ds_field_pub_date%5Bvalue%5D=&amp;ds_field_pub_date%5Bmin%5D=&amp;ds_field_pub_date%5Bmax%5D=&amp;f%5B0%5D=im_field_collection%3A2078399" class="facetapi-inactive active" rel="nofollow" id="facetapi-link--65">Records Related to the Assassination of Senator Robert F. Kennedy (1)<span class="element-invisible"> Apply Records Related to the Assassination of Senator Robert F. Kennedy filter </span></a></li>
+<li class="leaf"><a href="/readingroom/advanced-search-view?keyword=ecuador&amp;ds_field_pub_date_op=%3D&amp;ds_field_pub_date%5Bvalue%5D=&amp;ds_field_pub_date%5Bmin%5D=&amp;ds_field_pub_date%5Bmax%5D=&amp;f%5B0%5D=im_field_collection%3A1834888" class="facetapi-inactive active" rel="nofollow" id="facetapi-link--66">Scientific Abstracts (1)<span class="element-invisible"> Apply Scientific Abstracts filter </span></a></li>
+<li class="leaf"><a href="/readingroom/advanced-search-view?keyword=ecuador&amp;ds_field_pub_date_op=%3D&amp;ds_field_pub_date%5Bvalue%5D=&amp;ds_field_pub_date%5Bmin%5D=&amp;ds_field_pub_date%5Bmax%5D=&amp;f%5B0%5D=im_field_collection%3A46" class="facetapi-inactive active" rel="nofollow" id="facetapi-link--67">Soviet and Warsaw Pact Military Journals (1)<span class="element-invisible"> Apply Soviet and Warsaw Pact Military Journals filter </span></a></li>
+<li class="leaf"><a href="/readingroom/advanced-search-view?keyword=ecuador&amp;ds_field_pub_date_op=%3D&amp;ds_field_pub_date%5Bvalue%5D=&amp;ds_field_pub_date%5Bmin%5D=&amp;ds_field_pub_date%5Bmax%5D=&amp;f%5B0%5D=im_field_collection%3A1834890" class="facetapi-inactive active" rel="nofollow" id="facetapi-link--68">STARGATE (19)<span class="element-invisible"> Apply STARGATE filter </span></a></li>
+<li class="leaf"><a href="/readingroom/advanced-search-view?keyword=ecuador&amp;ds_field_pub_date_op=%3D&amp;ds_field_pub_date%5Bvalue%5D=&amp;ds_field_pub_date%5Bmin%5D=&amp;ds_field_pub_date%5Bmax%5D=&amp;f%5B0%5D=im_field_collection%3A1818029" class="facetapi-inactive active" rel="nofollow" id="facetapi-link--69">Stories of Sacrifice &amp; Dedication (2)<span class="element-invisible"> Apply Stories of Sacrifice &amp;amp; Dedication filter </span></a></li>
+<li class="leaf"><a href="/readingroom/advanced-search-view?keyword=ecuador&amp;ds_field_pub_date_op=%3D&amp;ds_field_pub_date%5Bvalue%5D=&amp;ds_field_pub_date%5Bmin%5D=&amp;ds_field_pub_date%5Bmax%5D=&amp;f%5B0%5D=im_field_collection%3A2062376" class="facetapi-inactive active" rel="nofollow" id="facetapi-link--70">Tet Declassified (7)<span class="element-invisible"> Apply Tet Declassified filter </span></a></li>
+<li class="leaf"><a href="/readingroom/advanced-search-view?keyword=ecuador&amp;ds_field_pub_date_op=%3D&amp;ds_field_pub_date%5Bvalue%5D=&amp;ds_field_pub_date%5Bmin%5D=&amp;ds_field_pub_date%5Bmax%5D=&amp;f%5B0%5D=im_field_collection%3A1822440" class="facetapi-inactive active" rel="nofollow" id="facetapi-link--71">The Berlin Wall Collection: A City Torn Apart: Building of the Berlin Wall (1)<span class="element-invisible"> Apply The Berlin Wall Collection: A City Torn Apart: Building of the Berlin Wall filter </span></a></li>
+<li class="leaf last"><a href="/readingroom/advanced-search-view?keyword=ecuador&amp;ds_field_pub_date_op=%3D&amp;ds_field_pub_date%5Bvalue%5D=&amp;ds_field_pub_date%5Bmin%5D=&amp;ds_field_pub_date%5Bmax%5D=&amp;f%5B0%5D=im_field_collection%3A14" class="facetapi-inactive active" rel="nofollow" id="facetapi-link--72">The CAESAR, POLO, and ESAU Papers (7)<span class="element-invisible"> Apply The CAESAR, POLO, and ESAU Papers filter </span></a></li>
+</ul></div>  </div>
+</div>
+<div id="block-facetapi-v1mdm7v1v0nz6begw7ey4n70p1hzre0d" class="block block-facetapi clearfix">
+
+    <h2 class="title">Filter by release date:</h2>
+  
+  <div class="content">
+    <div class="item-list"><ul class="facetapi-facetapi-links facetapi-facet-dm-field-release-date" id="facetapi-facet-apachesolrsolr-block-dm-field-release-date"><li class="leaf first"><a href="/readingroom/advanced-search-view?keyword=ecuador&amp;ds_field_pub_date_op=%3D&amp;ds_field_pub_date%5Bvalue%5D=&amp;ds_field_pub_date%5Bmin%5D=&amp;ds_field_pub_date%5Bmax%5D=&amp;f%5B0%5D=dm_field_release_date%3A%5B2026-01-01T00%3A00%3A00Z%20TO%202027-01-01T00%3A00%3A00Z%5D" class="facetapi-inactive active" rel="nofollow" id="facetapi-link--73">2026 (11)<span class="element-invisible"> Apply 2026 filter </span></a></li>
+<li class="leaf"><a href="/readingroom/advanced-search-view?keyword=ecuador&amp;ds_field_pub_date_op=%3D&amp;ds_field_pub_date%5Bvalue%5D=&amp;ds_field_pub_date%5Bmin%5D=&amp;ds_field_pub_date%5Bmax%5D=&amp;f%5B0%5D=dm_field_release_date%3A%5B2025-01-01T00%3A00%3A00Z%20TO%202026-01-01T00%3A00%3A00Z%5D" class="facetapi-inactive active" rel="nofollow" id="facetapi-link--74">2025 (8)<span class="element-invisible"> Apply 2025 filter </span></a></li>
+<li class="leaf"><a href="/readingroom/advanced-search-view?keyword=ecuador&amp;ds_field_pub_date_op=%3D&amp;ds_field_pub_date%5Bvalue%5D=&amp;ds_field_pub_date%5Bmin%5D=&amp;ds_field_pub_date%5Bmax%5D=&amp;f%5B0%5D=dm_field_release_date%3A%5B2024-01-01T00%3A00%3A00Z%20TO%202025-01-01T00%3A00%3A00Z%5D" class="facetapi-inactive active" rel="nofollow" id="facetapi-link--75">2024 (1)<span class="element-invisible"> Apply 2024 filter </span></a></li>
+<li class="leaf"><a href="/readingroom/advanced-search-view?keyword=ecuador&amp;ds_field_pub_date_op=%3D&amp;ds_field_pub_date%5Bvalue%5D=&amp;ds_field_pub_date%5Bmin%5D=&amp;ds_field_pub_date%5Bmax%5D=&amp;f%5B0%5D=dm_field_release_date%3A%5B2023-01-01T00%3A00%3A00Z%20TO%202024-01-01T00%3A00%3A00Z%5D" class="facetapi-inactive active" rel="nofollow" id="facetapi-link--76">2023 (16)<span class="element-invisible"> Apply 2023 filter </span></a></li>
+<li class="leaf"><a href="/readingroom/advanced-search-view?keyword=ecuador&amp;ds_field_pub_date_op=%3D&amp;ds_field_pub_date%5Bvalue%5D=&amp;ds_field_pub_date%5Bmin%5D=&amp;ds_field_pub_date%5Bmax%5D=&amp;f%5B0%5D=dm_field_release_date%3A%5B2022-01-01T00%3A00%3A00Z%20TO%202023-01-01T00%3A00%3A00Z%5D" class="facetapi-inactive active" rel="nofollow" id="facetapi-link--77">2022 (5)<span class="element-invisible"> Apply 2022 filter </span></a></li>
+<li class="leaf"><a href="/readingroom/advanced-search-view?keyword=ecuador&amp;ds_field_pub_date_op=%3D&amp;ds_field_pub_date%5Bvalue%5D=&amp;ds_field_pub_date%5Bmin%5D=&amp;ds_field_pub_date%5Bmax%5D=&amp;f%5B0%5D=dm_field_release_date%3A%5B2021-01-01T00%3A00%3A00Z%20TO%202022-01-01T00%3A00%3A00Z%5D" class="facetapi-inactive active" rel="nofollow" id="facetapi-link--78">2021 (6)<span class="element-invisible"> Apply 2021 filter </span></a></li>
+<li class="leaf"><a href="/readingroom/advanced-search-view?keyword=ecuador&amp;ds_field_pub_date_op=%3D&amp;ds_field_pub_date%5Bvalue%5D=&amp;ds_field_pub_date%5Bmin%5D=&amp;ds_field_pub_date%5Bmax%5D=&amp;f%5B0%5D=dm_field_release_date%3A%5B2020-01-01T00%3A00%3A00Z%20TO%202021-01-01T00%3A00%3A00Z%5D" class="facetapi-inactive active" rel="nofollow" id="facetapi-link--79">2020 (46)<span class="element-invisible"> Apply 2020 filter </span></a></li>
+<li class="leaf"><a href="/readingroom/advanced-search-view?keyword=ecuador&amp;ds_field_pub_date_op=%3D&amp;ds_field_pub_date%5Bvalue%5D=&amp;ds_field_pub_date%5Bmin%5D=&amp;ds_field_pub_date%5Bmax%5D=&amp;f%5B0%5D=dm_field_release_date%3A%5B2019-01-01T00%3A00%3A00Z%20TO%202020-01-01T00%3A00%3A00Z%5D" class="facetapi-inactive active" rel="nofollow" id="facetapi-link--80">2019 (82)<span class="element-invisible"> Apply 2019 filter </span></a></li>
+<li class="leaf"><a href="/readingroom/advanced-search-view?keyword=ecuador&amp;ds_field_pub_date_op=%3D&amp;ds_field_pub_date%5Bvalue%5D=&amp;ds_field_pub_date%5Bmin%5D=&amp;ds_field_pub_date%5Bmax%5D=&amp;f%5B0%5D=dm_field_release_date%3A%5B2018-01-01T00%3A00%3A00Z%20TO%202019-01-01T00%3A00%3A00Z%5D" class="facetapi-inactive active" rel="nofollow" id="facetapi-link--81">2018 (12)<span class="element-invisible"> Apply 2018 filter </span></a></li>
+<li class="leaf"><a href="/readingroom/advanced-search-view?keyword=ecuador&amp;ds_field_pub_date_op=%3D&amp;ds_field_pub_date%5Bvalue%5D=&amp;ds_field_pub_date%5Bmin%5D=&amp;ds_field_pub_date%5Bmax%5D=&amp;f%5B0%5D=dm_field_release_date%3A%5B2017-01-01T00%3A00%3A00Z%20TO%202018-01-01T00%3A00%3A00Z%5D" class="facetapi-inactive active" rel="nofollow" id="facetapi-link--82">2017 (499)<span class="element-invisible"> Apply 2017 filter </span></a></li>
+<li class="leaf"><a href="/readingroom/advanced-search-view?keyword=ecuador&amp;ds_field_pub_date_op=%3D&amp;ds_field_pub_date%5Bvalue%5D=&amp;ds_field_pub_date%5Bmin%5D=&amp;ds_field_pub_date%5Bmax%5D=&amp;f%5B0%5D=dm_field_release_date%3A%5B2016-01-01T00%3A00%3A00Z%20TO%202017-01-01T00%3A00%3A00Z%5D" class="facetapi-inactive active" rel="nofollow" id="facetapi-link--83">2016 (60)<span class="element-invisible"> Apply 2016 filter </span></a></li>
+<li class="leaf"><a href="/readingroom/advanced-search-view?keyword=ecuador&amp;ds_field_pub_date_op=%3D&amp;ds_field_pub_date%5Bvalue%5D=&amp;ds_field_pub_date%5Bmin%5D=&amp;ds_field_pub_date%5Bmax%5D=&amp;f%5B0%5D=dm_field_release_date%3A%5B2015-01-01T00%3A00%3A00Z%20TO%202016-01-01T00%3A00%3A00Z%5D" class="facetapi-inactive active" rel="nofollow" id="facetapi-link--84">2015 (172)<span class="element-invisible"> Apply 2015 filter </span></a></li>
+<li class="leaf"><a href="/readingroom/advanced-search-view?keyword=ecuador&amp;ds_field_pub_date_op=%3D&amp;ds_field_pub_date%5Bvalue%5D=&amp;ds_field_pub_date%5Bmin%5D=&amp;ds_field_pub_date%5Bmax%5D=&amp;f%5B0%5D=dm_field_release_date%3A%5B2014-01-01T00%3A00%3A00Z%20TO%202015-01-01T00%3A00%3A00Z%5D" class="facetapi-inactive active" rel="nofollow" id="facetapi-link--85">2014 (47)<span class="element-invisible"> Apply 2014 filter </span></a></li>
+<li class="leaf"><a href="/readingroom/advanced-search-view?keyword=ecuador&amp;ds_field_pub_date_op=%3D&amp;ds_field_pub_date%5Bvalue%5D=&amp;ds_field_pub_date%5Bmin%5D=&amp;ds_field_pub_date%5Bmax%5D=&amp;f%5B0%5D=dm_field_release_date%3A%5B2013-01-01T00%3A00%3A00Z%20TO%202014-01-01T00%3A00%3A00Z%5D" class="facetapi-inactive active" rel="nofollow" id="facetapi-link--86">2013 (164)<span class="element-invisible"> Apply 2013 filter </span></a></li>
+<li class="leaf"><a href="/readingroom/advanced-search-view?keyword=ecuador&amp;ds_field_pub_date_op=%3D&amp;ds_field_pub_date%5Bvalue%5D=&amp;ds_field_pub_date%5Bmin%5D=&amp;ds_field_pub_date%5Bmax%5D=&amp;f%5B0%5D=dm_field_release_date%3A%5B2012-01-01T00%3A00%3A00Z%20TO%202013-01-01T00%3A00%3A00Z%5D" class="facetapi-inactive active" rel="nofollow" id="facetapi-link--87">2012 (249)<span class="element-invisible"> Apply 2012 filter </span></a></li>
+<li class="leaf"><a href="/readingroom/advanced-search-view?keyword=ecuador&amp;ds_field_pub_date_op=%3D&amp;ds_field_pub_date%5Bvalue%5D=&amp;ds_field_pub_date%5Bmin%5D=&amp;ds_field_pub_date%5Bmax%5D=&amp;f%5B0%5D=dm_field_release_date%3A%5B2011-01-01T00%3A00%3A00Z%20TO%202012-01-01T00%3A00%3A00Z%5D" class="facetapi-inactive active" rel="nofollow" id="facetapi-link--88">2011 (579)<span class="element-invisible"> Apply 2011 filter </span></a></li>
+<li class="leaf"><a href="/readingroom/advanced-search-view?keyword=ecuador&amp;ds_field_pub_date_op=%3D&amp;ds_field_pub_date%5Bvalue%5D=&amp;ds_field_pub_date%5Bmin%5D=&amp;ds_field_pub_date%5Bmax%5D=&amp;f%5B0%5D=dm_field_release_date%3A%5B2010-01-01T00%3A00%3A00Z%20TO%202011-01-01T00%3A00%3A00Z%5D" class="facetapi-inactive active" rel="nofollow" id="facetapi-link--89">2010 (456)<span class="element-invisible"> Apply 2010 filter </span></a></li>
+<li class="leaf"><a href="/readingroom/advanced-search-view?keyword=ecuador&amp;ds_field_pub_date_op=%3D&amp;ds_field_pub_date%5Bvalue%5D=&amp;ds_field_pub_date%5Bmin%5D=&amp;ds_field_pub_date%5Bmax%5D=&amp;f%5B0%5D=dm_field_release_date%3A%5B2009-01-01T00%3A00%3A00Z%20TO%202010-01-01T00%3A00%3A00Z%5D" class="facetapi-inactive active" rel="nofollow" id="facetapi-link--90">2009 (122)<span class="element-invisible"> Apply 2009 filter </span></a></li>
+<li class="leaf"><a href="/readingroom/advanced-search-view?keyword=ecuador&amp;ds_field_pub_date_op=%3D&amp;ds_field_pub_date%5Bvalue%5D=&amp;ds_field_pub_date%5Bmin%5D=&amp;ds_field_pub_date%5Bmax%5D=&amp;f%5B0%5D=dm_field_release_date%3A%5B2008-01-01T00%3A00%3A00Z%20TO%202009-01-01T00%3A00%3A00Z%5D" class="facetapi-inactive active" rel="nofollow" id="facetapi-link--91">2008 (384)<span class="element-invisible"> Apply 2008 filter </span></a></li>
+<li class="leaf"><a href="/readingroom/advanced-search-view?keyword=ecuador&amp;ds_field_pub_date_op=%3D&amp;ds_field_pub_date%5Bvalue%5D=&amp;ds_field_pub_date%5Bmin%5D=&amp;ds_field_pub_date%5Bmax%5D=&amp;f%5B0%5D=dm_field_release_date%3A%5B2007-01-01T00%3A00%3A00Z%20TO%202008-01-01T00%3A00%3A00Z%5D" class="facetapi-inactive active" rel="nofollow" id="facetapi-link--92">2007 (148)<span class="element-invisible"> Apply 2007 filter </span></a></li>
+<li class="leaf"><a href="/readingroom/advanced-search-view?keyword=ecuador&amp;ds_field_pub_date_op=%3D&amp;ds_field_pub_date%5Bvalue%5D=&amp;ds_field_pub_date%5Bmin%5D=&amp;ds_field_pub_date%5Bmax%5D=&amp;f%5B0%5D=dm_field_release_date%3A%5B2006-01-01T00%3A00%3A00Z%20TO%202007-01-01T00%3A00%3A00Z%5D" class="facetapi-inactive active" rel="nofollow" id="facetapi-link--93">2006 (214)<span class="element-invisible"> Apply 2006 filter </span></a></li>
+<li class="leaf"><a href="/readingroom/advanced-search-view?keyword=ecuador&amp;ds_field_pub_date_op=%3D&amp;ds_field_pub_date%5Bvalue%5D=&amp;ds_field_pub_date%5Bmin%5D=&amp;ds_field_pub_date%5Bmax%5D=&amp;f%5B0%5D=dm_field_release_date%3A%5B2005-01-01T00%3A00%3A00Z%20TO%202006-01-01T00%3A00%3A00Z%5D" class="facetapi-inactive active" rel="nofollow" id="facetapi-link--94">2005 (228)<span class="element-invisible"> Apply 2005 filter </span></a></li>
+<li class="leaf"><a href="/readingroom/advanced-search-view?keyword=ecuador&amp;ds_field_pub_date_op=%3D&amp;ds_field_pub_date%5Bvalue%5D=&amp;ds_field_pub_date%5Bmin%5D=&amp;ds_field_pub_date%5Bmax%5D=&amp;f%5B0%5D=dm_field_release_date%3A%5B2004-01-01T00%3A00%3A00Z%20TO%202005-01-01T00%3A00%3A00Z%5D" class="facetapi-inactive active" rel="nofollow" id="facetapi-link--95">2004 (277)<span class="element-invisible"> Apply 2004 filter </span></a></li>
+<li class="leaf"><a href="/readingroom/advanced-search-view?keyword=ecuador&amp;ds_field_pub_date_op=%3D&amp;ds_field_pub_date%5Bvalue%5D=&amp;ds_field_pub_date%5Bmin%5D=&amp;ds_field_pub_date%5Bmax%5D=&amp;f%5B0%5D=dm_field_release_date%3A%5B2003-01-01T00%3A00%3A00Z%20TO%202004-01-01T00%3A00%3A00Z%5D" class="facetapi-inactive active" rel="nofollow" id="facetapi-link--96">2003 (305)<span class="element-invisible"> Apply 2003 filter </span></a></li>
+<li class="leaf"><a href="/readingroom/advanced-search-view?keyword=ecuador&amp;ds_field_pub_date_op=%3D&amp;ds_field_pub_date%5Bvalue%5D=&amp;ds_field_pub_date%5Bmin%5D=&amp;ds_field_pub_date%5Bmax%5D=&amp;f%5B0%5D=dm_field_release_date%3A%5B2002-01-01T00%3A00%3A00Z%20TO%202003-01-01T00%3A00%3A00Z%5D" class="facetapi-inactive active" rel="nofollow" id="facetapi-link--97">2002 (279)<span class="element-invisible"> Apply 2002 filter </span></a></li>
+<li class="leaf"><a href="/readingroom/advanced-search-view?keyword=ecuador&amp;ds_field_pub_date_op=%3D&amp;ds_field_pub_date%5Bvalue%5D=&amp;ds_field_pub_date%5Bmin%5D=&amp;ds_field_pub_date%5Bmax%5D=&amp;f%5B0%5D=dm_field_release_date%3A%5B2001-01-01T00%3A00%3A00Z%20TO%202002-01-01T00%3A00%3A00Z%5D" class="facetapi-inactive active" rel="nofollow" id="facetapi-link--98">2001 (251)<span class="element-invisible"> Apply 2001 filter </span></a></li>
+<li class="leaf"><a href="/readingroom/advanced-search-view?keyword=ecuador&amp;ds_field_pub_date_op=%3D&amp;ds_field_pub_date%5Bvalue%5D=&amp;ds_field_pub_date%5Bmin%5D=&amp;ds_field_pub_date%5Bmax%5D=&amp;f%5B0%5D=dm_field_release_date%3A%5B2000-01-01T00%3A00%3A00Z%20TO%202001-01-01T00%3A00%3A00Z%5D" class="facetapi-inactive active" rel="nofollow" id="facetapi-link--99">2000 (175)<span class="element-invisible"> Apply 2000 filter </span></a></li>
+<li class="leaf"><a href="/readingroom/advanced-search-view?keyword=ecuador&amp;ds_field_pub_date_op=%3D&amp;ds_field_pub_date%5Bvalue%5D=&amp;ds_field_pub_date%5Bmin%5D=&amp;ds_field_pub_date%5Bmax%5D=&amp;f%5B0%5D=dm_field_release_date%3A%5B1999-01-01T00%3A00%3A00Z%20TO%202000-01-01T00%3A00%3A00Z%5D" class="facetapi-inactive active" rel="nofollow" id="facetapi-link--100">1999 (310)<span class="element-invisible"> Apply 1999 filter </span></a></li>
+<li class="leaf"><a href="/readingroom/advanced-search-view?keyword=ecuador&amp;ds_field_pub_date_op=%3D&amp;ds_field_pub_date%5Bvalue%5D=&amp;ds_field_pub_date%5Bmin%5D=&amp;ds_field_pub_date%5Bmax%5D=&amp;f%5B0%5D=dm_field_release_date%3A%5B1998-01-01T00%3A00%3A00Z%20TO%201999-01-01T00%3A00%3A00Z%5D" class="facetapi-inactive active" rel="nofollow" id="facetapi-link--101">1998 (237)<span class="element-invisible"> Apply 1998 filter </span></a></li>
+<li class="leaf"><a href="/readingroom/advanced-search-view?keyword=ecuador&amp;ds_field_pub_date_op=%3D&amp;ds_field_pub_date%5Bvalue%5D=&amp;ds_field_pub_date%5Bmin%5D=&amp;ds_field_pub_date%5Bmax%5D=&amp;f%5B0%5D=dm_field_release_date%3A%5B1997-01-01T00%3A00%3A00Z%20TO%201998-01-01T00%3A00%3A00Z%5D" class="facetapi-inactive active" rel="nofollow" id="facetapi-link--102">1997 (1)<span class="element-invisible"> Apply 1997 filter </span></a></li>
+<li class="leaf"><a href="/readingroom/advanced-search-view?keyword=ecuador&amp;ds_field_pub_date_op=%3D&amp;ds_field_pub_date%5Bvalue%5D=&amp;ds_field_pub_date%5Bmin%5D=&amp;ds_field_pub_date%5Bmax%5D=&amp;f%5B0%5D=dm_field_release_date%3A%5B1983-01-01T00%3A00%3A00Z%20TO%201984-01-01T00%3A00%3A00Z%5D" class="facetapi-inactive active" rel="nofollow" id="facetapi-link--103">1983 (2)<span class="element-invisible"> Apply 1983 filter </span></a></li>
+<li class="leaf last"><a href="/readingroom/advanced-search-view?keyword=ecuador&amp;ds_field_pub_date_op=%3D&amp;ds_field_pub_date%5Bvalue%5D=&amp;ds_field_pub_date%5Bmin%5D=&amp;ds_field_pub_date%5Bmax%5D=&amp;f%5B0%5D=dm_field_release_date%3A%5B1981-01-01T00%3A00%3A00Z%20TO%201982-01-01T00%3A00%3A00Z%5D" class="facetapi-inactive active" rel="nofollow" id="facetapi-link--104">1981 (1)<span class="element-invisible"> Apply 1981 filter </span></a></li>
+</ul></div>  </div>
+</div>
+<div id="block-facetapi-n18e4x0qrraip7nv6i0sdyicjsq77hcb" class="block block-facetapi clearfix">
+
+    <h2 class="title">Filter by post date:</h2>
+  
+  <div class="content">
+    <div class="item-list"><ul class="facetapi-facetapi-links facetapi-facet-created" id="facetapi-facet-apachesolrsolr-block-created"><li class="leaf first"><a href="/readingroom/advanced-search-view?keyword=ecuador&amp;ds_field_pub_date_op=%3D&amp;ds_field_pub_date%5Bvalue%5D=&amp;ds_field_pub_date%5Bmin%5D=&amp;ds_field_pub_date%5Bmax%5D=&amp;f%5B0%5D=ds_created%3A%5B2026-01-01T00%3A00%3A00Z%20TO%202027-01-01T00%3A00%3A00Z%5D" class="facetapi-inactive active" rel="nofollow" id="facetapi-link">2026 (12)<span class="element-invisible"> Apply 2026 filter </span></a></li>
+<li class="leaf"><a href="/readingroom/advanced-search-view?keyword=ecuador&amp;ds_field_pub_date_op=%3D&amp;ds_field_pub_date%5Bvalue%5D=&amp;ds_field_pub_date%5Bmin%5D=&amp;ds_field_pub_date%5Bmax%5D=&amp;f%5B0%5D=ds_created%3A%5B2025-01-01T00%3A00%3A00Z%20TO%202026-01-01T00%3A00%3A00Z%5D" class="facetapi-inactive active" rel="nofollow" id="facetapi-link--2">2025 (14)<span class="element-invisible"> Apply 2025 filter </span></a></li>
+<li class="leaf"><a href="/readingroom/advanced-search-view?keyword=ecuador&amp;ds_field_pub_date_op=%3D&amp;ds_field_pub_date%5Bvalue%5D=&amp;ds_field_pub_date%5Bmin%5D=&amp;ds_field_pub_date%5Bmax%5D=&amp;f%5B0%5D=ds_created%3A%5B2024-01-01T00%3A00%3A00Z%20TO%202025-01-01T00%3A00%3A00Z%5D" class="facetapi-inactive active" rel="nofollow" id="facetapi-link--3">2024 (1)<span class="element-invisible"> Apply 2024 filter </span></a></li>
+<li class="leaf"><a href="/readingroom/advanced-search-view?keyword=ecuador&amp;ds_field_pub_date_op=%3D&amp;ds_field_pub_date%5Bvalue%5D=&amp;ds_field_pub_date%5Bmin%5D=&amp;ds_field_pub_date%5Bmax%5D=&amp;f%5B0%5D=ds_created%3A%5B2023-01-01T00%3A00%3A00Z%20TO%202024-01-01T00%3A00%3A00Z%5D" class="facetapi-inactive active" rel="nofollow" id="facetapi-link--4">2023 (56)<span class="element-invisible"> Apply 2023 filter </span></a></li>
+<li class="leaf"><a href="/readingroom/advanced-search-view?keyword=ecuador&amp;ds_field_pub_date_op=%3D&amp;ds_field_pub_date%5Bvalue%5D=&amp;ds_field_pub_date%5Bmin%5D=&amp;ds_field_pub_date%5Bmax%5D=&amp;f%5B0%5D=ds_created%3A%5B2022-01-01T00%3A00%3A00Z%20TO%202023-01-01T00%3A00%3A00Z%5D" class="facetapi-inactive active" rel="nofollow" id="facetapi-link--5">2022 (34)<span class="element-invisible"> Apply 2022 filter </span></a></li>
+<li class="leaf"><a href="/readingroom/advanced-search-view?keyword=ecuador&amp;ds_field_pub_date_op=%3D&amp;ds_field_pub_date%5Bvalue%5D=&amp;ds_field_pub_date%5Bmin%5D=&amp;ds_field_pub_date%5Bmax%5D=&amp;f%5B0%5D=ds_created%3A%5B2020-01-01T00%3A00%3A00Z%20TO%202021-01-01T00%3A00%3A00Z%5D" class="facetapi-inactive active" rel="nofollow" id="facetapi-link--6">2020 (35)<span class="element-invisible"> Apply 2020 filter </span></a></li>
+<li class="leaf"><a href="/readingroom/advanced-search-view?keyword=ecuador&amp;ds_field_pub_date_op=%3D&amp;ds_field_pub_date%5Bvalue%5D=&amp;ds_field_pub_date%5Bmin%5D=&amp;ds_field_pub_date%5Bmax%5D=&amp;f%5B0%5D=ds_created%3A%5B2019-01-01T00%3A00%3A00Z%20TO%202020-01-01T00%3A00%3A00Z%5D" class="facetapi-inactive active" rel="nofollow" id="facetapi-link--7">2019 (65)<span class="element-invisible"> Apply 2019 filter </span></a></li>
+<li class="leaf"><a href="/readingroom/advanced-search-view?keyword=ecuador&amp;ds_field_pub_date_op=%3D&amp;ds_field_pub_date%5Bvalue%5D=&amp;ds_field_pub_date%5Bmin%5D=&amp;ds_field_pub_date%5Bmax%5D=&amp;f%5B0%5D=ds_created%3A%5B2018-01-01T00%3A00%3A00Z%20TO%202019-01-01T00%3A00%3A00Z%5D" class="facetapi-inactive active" rel="nofollow" id="facetapi-link--8">2018 (19)<span class="element-invisible"> Apply 2018 filter </span></a></li>
+<li class="leaf"><a href="/readingroom/advanced-search-view?keyword=ecuador&amp;ds_field_pub_date_op=%3D&amp;ds_field_pub_date%5Bvalue%5D=&amp;ds_field_pub_date%5Bmin%5D=&amp;ds_field_pub_date%5Bmax%5D=&amp;f%5B0%5D=ds_created%3A%5B2017-01-01T00%3A00%3A00Z%20TO%202018-01-01T00%3A00%3A00Z%5D" class="facetapi-inactive active" rel="nofollow" id="facetapi-link--9">2017 (116)<span class="element-invisible"> Apply 2017 filter </span></a></li>
+<li class="leaf"><a href="/readingroom/advanced-search-view?keyword=ecuador&amp;ds_field_pub_date_op=%3D&amp;ds_field_pub_date%5Bvalue%5D=&amp;ds_field_pub_date%5Bmin%5D=&amp;ds_field_pub_date%5Bmax%5D=&amp;f%5B0%5D=ds_created%3A%5B2016-01-01T00%3A00%3A00Z%20TO%202017-01-01T00%3A00%3A00Z%5D" class="facetapi-inactive active" rel="nofollow" id="facetapi-link--10">2016 (4813)<span class="element-invisible"> Apply 2016 filter </span></a></li>
+<li class="leaf"><a href="/readingroom/advanced-search-view?keyword=ecuador&amp;ds_field_pub_date_op=%3D&amp;ds_field_pub_date%5Bvalue%5D=&amp;ds_field_pub_date%5Bmin%5D=&amp;ds_field_pub_date%5Bmax%5D=&amp;f%5B0%5D=ds_created%3A%5B2015-01-01T00%3A00%3A00Z%20TO%202016-01-01T00%3A00%3A00Z%5D" class="facetapi-inactive active" rel="nofollow" id="facetapi-link--11">2015 (206)<span class="element-invisible"> Apply 2015 filter </span></a></li>
+<li class="leaf"><a href="/readingroom/advanced-search-view?keyword=ecuador&amp;ds_field_pub_date_op=%3D&amp;ds_field_pub_date%5Bvalue%5D=&amp;ds_field_pub_date%5Bmin%5D=&amp;ds_field_pub_date%5Bmax%5D=&amp;f%5B0%5D=ds_created%3A%5B2013-01-01T00%3A00%3A00Z%20TO%202014-01-01T00%3A00%3A00Z%5D" class="facetapi-inactive active" rel="nofollow" id="facetapi-link--12">2013 (56)<span class="element-invisible"> Apply 2013 filter </span></a></li>
+<li class="leaf last"><a href="/readingroom/advanced-search-view?keyword=ecuador&amp;ds_field_pub_date_op=%3D&amp;ds_field_pub_date%5Bvalue%5D=&amp;ds_field_pub_date%5Bmin%5D=&amp;ds_field_pub_date%5Bmax%5D=&amp;f%5B0%5D=ds_created%3A%5B2012-01-01T00%3A00%3A00Z%20TO%202013-01-01T00%3A00%3A00Z%5D" class="facetapi-inactive active" rel="nofollow" id="facetapi-link--13">2012 (25)<span class="element-invisible"> Apply 2012 filter </span></a></li>
+</ul></div>  </div>
+</div>
+  </div>
+                  </div>
+                                  <div class="region region-header clearfix">
+    <div id="block-system-main" class="block block-system clearfix">
+
+    
+  <div class="content">
+    <div class="view view-advanced-search-view view-id-advanced_search_view view-display-id-advanced_search_view view-dom-id-9299f53ddb8c0bbd9f02abf513494405">
+            <div class="view-header">
+      <p><strong>Click <a href="/readingroom/docs/Electronic%20Reading%20Room%20Advanced%20Search%20Guide.pdf" target="_blank">here</a> for Advanced Search Help</strong></p>
+    </div>
+  
+      <div class="view-filters">
+      <form action="/readingroom/advanced-search-view" method="get" id="views-exposed-form-advanced-search-view-advanced-search-view" accept-charset="UTF-8"><div><div class="views-exposed-form">
+  <div class="views-exposed-widgets clearfix">
+          <div id="edit-keyword-wrapper" class="views-exposed-widget views-widget-filter-keyword">
+                  <label for="edit-keyword">
+            Search Term(s)          </label>
+                        <div class="views-widget">
+          <div class="form-item form-type-textfield form-item-keyword">
+ <input type="text" id="edit-keyword" name="keyword" value="ecuador" size="60" maxlength="128" class="form-text" />
+</div>
+        </div>
+                  <div class="description">
+            Search for term(s) in the full-text and metadata fields          </div>
+              </div>
+          <div id="edit-im-field-collection-wrapper" class="views-exposed-widget views-widget-filter-im_field_collection">
+                  <label for="edit-im-field-collection">
+            Collection (Use the CTRL key to select and de-select collections)          </label>
+                        <div class="views-widget">
+          <div class="form-item form-type-select form-item-im-field-collection">
+ <select multiple="multiple" name="im_field_collection[]" id="edit-im-field-collection" size="5" class="form-select"><option value="1">A Life in Intelligence - The Richard Helms Collection</option><option value="2">A-12 OXCART Reconnaissance Aircraft Documentation</option><option value="3">Air America: Upholding the Airmen&#039;s Bond</option><option value="4">An Underwater Ice Station Zebra: Recovering a Secret Spy Satellite Capsule from 16,400 feet Below the Pacific Ocean</option><option value="5">Animal Partners</option><option value="6">Aquiline</option><option value="7">Argentina Declassification Project - The &quot;Dirty War&quot; (1976-83)</option><option value="8">Atomic Spies: Ethel and Julius Rosenberg</option><option value="9">Baptism By Fire: CIA Analysis of the Korean War Overview</option><option value="10">Bay of Pigs Release</option><option value="11">Berlin Tunnel</option><option value="12">Bosnia, Intelligence, and the Clinton Presidency</option><option value="13">CIA Analysis of the Soviet Navy</option><option value="14">CIA Analysis of the Warsaw Pact Forces</option><option value="15">CIA Declassifies Oldest Documents in U.S. Government Collection</option><option value="16">CIA&#039;s Clandestine Services: Histories of Civil Air Transport</option><option value="17">Consolidated Translations</option><option value="18">Creating Global Intelligence</option><option value="19">CREST: 25-Year Program Archive</option><option value="20">Current/Central Intelligence Bulletin</option><option value="21">Daily Summary</option><option value="22">Declassified Articles from Studies in Intelligence: The IC’s Journal for the Intelligence Professional</option><option value="23">DECLASSIFIED DOCUMENTS RELATED TO 9/11 ATTACKS</option><option value="24">Doctor Zhivago</option><option value="25">Documents Related to the Former Detention and Interrogation Program</option><option value="26">Fall of the Libyan Monarchy</option><option value="27">FOIA Collection</option><option value="28">Francis Gary Powers: U-2 Spy Pilot Shot Down by the Soviets</option><option value="29">From Typist to Trailblazer: The Evolving View of Women in the CIA&#039;s Workforce</option><option value="30">General CIA Records</option><option value="31">Ground Photo Caption Cards</option><option value="32">Guatemala</option><option value="33">Human Rights in Latin America</option><option value="34">Intelligence, Policy, and Politics: The DCI, the White House, and Congress</option><option value="35">Intelligence Warning of the 1957 Launch of Sputnik</option><option value="36">John McCone as Director of Central Intelligence, 1961-1965</option><option value="37">JPRS</option><option value="38">Library of Congress</option><option value="39">Lt. Col. Oleg Penkovsky: Western Spy in Soviet GRU</option><option value="40">Lunik on Loan: A Space Age Spy Story</option><option value="41">MHCHAOS</option><option value="42">National Intelligence Council (NIC) Collection</option><option value="43">Nazi War Crimes Disclosure Act</option><option value="44">NGA Records (Formerly NIMA)</option><option value="45">NIS</option><option value="46">Nixon Collection</option><option value="47">OSS Collection</option><option value="48">POW MIA</option><option value="49">Preparing for Martial Law: Through the Eyes of Colonel Ryszard Kuklinski</option><option value="50">President George H. W. Bush&#039;s Farewell Visit to CIA</option><option value="51">President Carter and the Role of Intelligence in the Camp David Accords</option><option value="52">President Nixon and the Role of Intelligence in the 1973 Arab-Israeli War</option><option value="53">President&#039;s Daily Brief 1961-1969</option><option value="54">President&#039;s Daily Brief 1969-1977</option><option value="55">Reagan Collection</option><option value="56">Records Related to Amelia Earhart</option><option value="57">Records Related to the Assassination of Reverend Dr. Martin Luther King, Jr.</option><option value="58">Records Related to the Assassination of Reverend Dr. Martin Luther King, Jr.</option><option value="59">Records Related to the Assassination of Senator Robert F. Kennedy</option><option value="60">Records Related to the Assassination of Senator Robert F. Kennedy</option><option value="61">Scientific Abstracts</option><option value="62">Secret Writing</option><option value="63">Soviet and Warsaw Pact Military Journals</option><option value="64">Soviet and Warsaw Pact Military Journals (Latest)</option><option value="65">STARGATE</option><option value="66">Stories of Sacrifice &amp; Dedication</option><option value="67">Strategic Warning and the Role of Intelligence: Lessons Learned From The 1968 Soviet Invasion of Czechoslovakia</option><option value="68">Tet Declassified</option><option value="69">The Berlin Wall Collection: A City Torn Apart: Building of the Berlin Wall</option><option value="70">The CAESAR, POLO, and ESAU Papers</option><option value="71">The China Collection</option><option value="72">The Collapse of Communism in Eastern Europe: A 30-Year Legacy</option><option value="73">The Family Jewels</option><option value="74">The Original Wizards of Langley</option><option value="75">The Princeton Collection</option><option value="76">The Vietnam Collection</option><option value="77">UFOs: Fact or Fiction?</option><option value="78">Vietnam Histories</option><option value="79">Wartime Statutes - Instruments of Soviet Control</option><option value="80">What was the Missile Gap?</option></select>
+</div>
+        </div>
+                  <div class="description">
+            Select a collection or use the CTRL key to select and de-select collections          </div>
+              </div>
+          <div id="edit-label-wrapper" class="views-exposed-widget views-widget-filter-label">
+                  <label for="edit-label">
+            Document Title          </label>
+                        <div class="views-widget">
+          <div class="form-item form-type-textfield form-item-label">
+ <input type="text" id="edit-label" name="label" value="" size="30" maxlength="128" class="form-text" />
+</div>
+        </div>
+                  <div class="description">
+            Search for term(s) in the Title field          </div>
+              </div>
+          <div id="edit-sm-field-document-number-wrapper" class="views-exposed-widget views-widget-filter-sm_field_document_number">
+                  <label for="edit-sm-field-document-number">
+            Document Number/ESDN          </label>
+                        <div class="views-widget">
+          <div class="form-item form-type-textfield form-item-sm-field-document-number">
+ <input type="text" id="edit-sm-field-document-number" name="sm_field_document_number" value="" size="30" maxlength="128" class="form-text" />
+</div>
+        </div>
+                  <div class="description">
+            Unique Document Identifier          </div>
+              </div>
+          <div id="edit-sm-field-original-classification-wrapper" class="views-exposed-widget views-widget-filter-sm_field_original_classification">
+                  <label for="edit-sm-field-original-classification">
+            Original Classification          </label>
+                        <div class="views-widget">
+          <div class="form-item form-type-textfield form-item-sm-field-original-classification">
+ <input type="text" id="edit-sm-field-original-classification" name="sm_field_original_classification" value="" size="30" maxlength="128" class="form-text" />
+</div>
+        </div>
+                  <div class="description">
+            Classification prior to review and release. Search by first letter: T, S, C, U, R, F, K          </div>
+              </div>
+          <div id="edit-ds-field-pub-date-wrapper" class="views-exposed-widget views-widget-filter-ds_field_pub_date">
+                  <label for="edit-ds-field-pub-date">
+            Publication Date (YYYY-MM-DD)          </label>
+                          <div class="views-operator">
+            <div class="form-item form-type-select form-item-ds-field-pub-date-op">
+  <select id="edit-ds-field-pub-date-op" name="ds_field_pub_date_op" class="form-select"><option value="&lt;">Is less than</option><option value="&lt;=">Is less than or equal to</option><option value="=" selected="selected">Is equal to</option><option value="!=">Is not equal to</option><option value="&gt;=">Is greater than or equal to</option><option value="&gt;">Is greater than</option><option value="between">Is between</option><option value="not between">Is not between</option><option value="regular_expression">Regular expression</option><option value="not_regular_expression">Not regular expression</option></select>
+</div>
+          </div>
+                <div class="views-widget">
+          <div class="form-item form-type-textfield form-item-ds-field-pub-date-value">
+  <input type="text" id="edit-ds-field-pub-date-value" name="ds_field_pub_date[value]" value="" size="30" maxlength="128" class="form-text" />
+</div>
+<div class="form-item form-type-textfield form-item-ds-field-pub-date-min">
+  <input class="views_input_date form-text" type="text" id="edit-ds-field-pub-date-min" name="ds_field_pub_date[min]" value="" size="30" maxlength="128" />
+</div>
+<div class="form-item form-type-textfield form-item-ds-field-pub-date-max">
+  <label for="edit-ds-field-pub-date-max">And </label>
+ <input class="views_input_date form-text" type="text" id="edit-ds-field-pub-date-max" name="ds_field_pub_date[max]" value="" size="30" maxlength="128" />
+</div>
+        </div>
+                  <div class="description">
+            Date of document creation          </div>
+              </div>
+          <div id="edit-sm-field-content-type-wrapper" class="views-exposed-widget views-widget-filter-sm_field_content_type">
+                  <label for="edit-sm-field-content-type">
+            Content Type          </label>
+                        <div class="views-widget">
+          <div class="form-item form-type-textfield form-item-sm-field-content-type">
+ <input type="text" id="edit-sm-field-content-type" name="sm_field_content_type" value="" size="30" maxlength="128" class="form-text" />
+</div>
+        </div>
+                  <div class="description">
+            Type of document (e.g. Cable, Letter, Memo)          </div>
+              </div>
+          <div id="edit-sm-field-case-number-wrapper" class="views-exposed-widget views-widget-filter-sm_field_case_number">
+                  <label for="edit-sm-field-case-number">
+            Case Number          </label>
+                        <div class="views-widget">
+          <div class="form-item form-type-textfield form-item-sm-field-case-number">
+ <input type="text" id="edit-sm-field-case-number" name="sm_field_case_number" value="" size="30" maxlength="128" class="form-text" />
+</div>
+        </div>
+                  <div class="description">
+            Unique identifier for FOIA release documents          </div>
+              </div>
+                    <div class="views-exposed-widget views-submit-button">
+      <input type="submit" id="edit-submit-advanced-search-view" value="Search" class="form-submit" />    </div>
+          <div class="views-exposed-widget views-reset-button">
+        <input type="submit" id="edit-reset" name="op" value="Reset" class="form-submit" />      </div>
+      </div>
+</div>
+</div></form>    </div>
+  
+  
+      <div class="view-content">
+      <table  class="views-table cols-2">
+         <thead>
+      <tr>
+                  <th  class="views-field views-field-label" scope="col">
+            <a href="/readingroom/advanced-search-view?keyword=ecuador&amp;label=&amp;sm_field_document_number=&amp;sm_field_original_classification=&amp;ds_field_pub_date_op=%3D&amp;ds_field_pub_date%5Bvalue%5D=&amp;ds_field_pub_date%5Bmin%5D=&amp;ds_field_pub_date%5Bmax%5D=&amp;sm_field_content_type=&amp;sm_field_case_number=&amp;&amp;order=label&amp;sort=asc" title="sort by Title" class="active">Title</a>          </th>
+                  <th  class="views-field views-field-ds-field-pub-date" scope="col">
+            Publication Date          </th>
+              </tr>
+    </thead>
+    <tbody>
+          <tr  class="odd views-field-tooltip-row views-row-first">
+                  <td  class="views-field views-field-label views-field-tooltip views-field-tooltip-field-label views-field-tooltip-row-0">
+            <a href="/readingroom/document/cia-rdp08c01297r000700110011-3">FINAL DEMARCATION OF ECUADOR-PERU BOUNDARY</a>          </td>
+                  <td  class="views-field views-field-ds-field-pub-date">
+            July 24, 1945          </td>
+              </tr>
+          <tr  class="even views-field-tooltip-row">
+                  <td  class="views-field views-field-label views-field-tooltip views-field-tooltip-field-label views-field-tooltip-row-1">
+            <a href="/readingroom/document/cia-rdp08c01297r000700120008-6">HISTORICAL SUMMARY OF THE ECUADOR/PERU BORDER DISPUTE</a>          </td>
+                  <td  class="views-field views-field-ds-field-pub-date">
+            October 28, 1976          </td>
+              </tr>
+          <tr  class="odd views-field-tooltip-row">
+                  <td  class="views-field views-field-label views-field-tooltip views-field-tooltip-field-label views-field-tooltip-row-2">
+            <a href="/readingroom/document/cia-rdp08c01297r000700120006-8">ECUADOR: NEW TRY FOR SOVEREIGN ACCESS TO THE AMAZON</a>          </td>
+                  <td  class="views-field views-field-ds-field-pub-date">
+            December 15, 1977          </td>
+              </tr>
+          <tr  class="even views-field-tooltip-row">
+                  <td  class="views-field views-field-label views-field-tooltip views-field-tooltip-field-label views-field-tooltip-row-3">
+            <a href="/readingroom/document/cia-rdp08c01297r000700120018-5">ECUADOR AND THE PROTOCAL OF RIO DE JANEIRO</a>          </td>
+                  <td  class="views-field views-field-ds-field-pub-date">
+            December 17, 1963          </td>
+              </tr>
+          <tr  class="odd views-field-tooltip-row">
+                  <td  class="views-field views-field-label views-field-tooltip views-field-tooltip-field-label views-field-tooltip-row-4">
+            <a href="/readingroom/document/cia-rdp79-00891a000700010001-5">ECUADOR HANDBOOK</a>          </td>
+                  <td  class="views-field views-field-ds-field-pub-date">
+            October 1, 1970          </td>
+              </tr>
+          <tr  class="even views-field-tooltip-row">
+                  <td  class="views-field views-field-label views-field-tooltip views-field-tooltip-field-label views-field-tooltip-row-5">
+            <a href="/readingroom/document/cia-rdp82-00457r002100400009-9">ADOLFO KLAERE, NAZI LEADER, RETURNS TO ECUADOR</a>          </td>
+                  <td  class="views-field views-field-ds-field-pub-date">
+            December 3, 1948          </td>
+              </tr>
+          <tr  class="odd views-field-tooltip-row">
+                  <td  class="views-field views-field-label views-field-tooltip views-field-tooltip-field-label views-field-tooltip-row-6">
+            <a href="/readingroom/document/cia-rdp85t00875r001600030002-6">INTELLIGENCE MEMORANDUM ECUADOR&#039;S CONTINUING EXPORT AND BUDGET PROBLEMS</a>          </td>
+                  <td  class="views-field views-field-ds-field-pub-date">
+            January 1, 1970          </td>
+              </tr>
+          <tr  class="even views-field-tooltip-row">
+                  <td  class="views-field views-field-label views-field-tooltip views-field-tooltip-field-label views-field-tooltip-row-7">
+            <a href="/readingroom/document/cia-rdp08c01297r000700120007-7">AMERICAN JOURNAL OF INTERNATIONAL LAW</a>          </td>
+                  <td  class="views-field views-field-ds-field-pub-date">
+            April 1, 1977          </td>
+              </tr>
+          <tr  class="odd views-field-tooltip-row">
+                  <td  class="views-field views-field-label views-field-tooltip views-field-tooltip-field-label views-field-tooltip-row-8">
+            <a href="/readingroom/document/cia-rdp08c01297r000700080006-3">THE 200 MILE LIMIT AND LATIN AMERICAN FISHERIES PROBLEMS</a>          </td>
+                  <td  class="views-field views-field-ds-field-pub-date">
+            November 28, 1967          </td>
+              </tr>
+          <tr  class="even views-field-tooltip-row">
+                  <td  class="views-field views-field-label views-field-tooltip views-field-tooltip-field-label views-field-tooltip-row-9">
+            <a href="/readingroom/document/cia-rdp08c01297r000700120011-2">PORT ON THE AMAZON</a>          </td>
+                  <td  class="views-field views-field-ds-field-pub-date">
+            March 2, 1970          </td>
+              </tr>
+          <tr  class="odd views-field-tooltip-row">
+                  <td  class="views-field views-field-label views-field-tooltip views-field-tooltip-field-label views-field-tooltip-row-10">
+            <a href="/readingroom/document/cia-rdp08c01297r000700120019-4">ECUADOR&#039;S POSITION OF PERUVIAN BOUNDARY QUESTION</a>          </td>
+                  <td  class="views-field views-field-ds-field-pub-date">
+            September 7, 1963          </td>
+              </tr>
+          <tr  class="even views-field-tooltip-row">
+                  <td  class="views-field views-field-label views-field-tooltip views-field-tooltip-field-label views-field-tooltip-row-11">
+            <a href="/readingroom/document/cia-rdp79t01003a002500010002-1">CURRENT SUPPORT BRIEF PROJECT NO. 47.5294 THE DEEPENING BANANA CRISIS IN ECUADOR 30 NOVEMBER 1965</a>          </td>
+                  <td  class="views-field views-field-ds-field-pub-date">
+            November 30, 1965          </td>
+              </tr>
+          <tr  class="odd views-field-tooltip-row">
+                  <td  class="views-field views-field-label views-field-tooltip views-field-tooltip-field-label views-field-tooltip-row-12">
+            <a href="/readingroom/document/cia-rdp85t00875r001100100135-6">THE POLITICAL SITUATION IN ECUADOR</a>          </td>
+                  <td  class="views-field views-field-ds-field-pub-date">
+            November 22, 1971          </td>
+              </tr>
+          <tr  class="even views-field-tooltip-row">
+                  <td  class="views-field views-field-label views-field-tooltip views-field-tooltip-field-label views-field-tooltip-row-13">
+            <a href="/readingroom/document/cia-rdp08c01297r000700080016-2">FISHING VESSEL SEIZURE PROBLEM IN ECUADOR</a>          </td>
+                  <td  class="views-field views-field-ds-field-pub-date">
+            August 27, 1952          </td>
+              </tr>
+          <tr  class="odd views-field-tooltip-row">
+                  <td  class="views-field views-field-label views-field-tooltip views-field-tooltip-field-label views-field-tooltip-row-14">
+            <a href="/readingroom/document/cia-rdp08c01297r000700110009-6">DISPUTE BETWEEN PERU AND ECUADOR WITH REGARD TO THEIR COMMON BOUNDARY IN THE LAGARTOCOCHA SECTOR</a>          </td>
+                  <td  class="views-field views-field-ds-field-pub-date">
+            March 20, 1948          </td>
+              </tr>
+          <tr  class="even views-field-tooltip-row">
+                  <td  class="views-field views-field-label views-field-tooltip views-field-tooltip-field-label views-field-tooltip-row-15">
+            <a href="/readingroom/document/cia-rdp79-00891a001100120001-8">UPDATE OF ECUADOR HANDBOOK</a>          </td>
+                  <td  class="views-field views-field-ds-field-pub-date">
+            May 1, 1972          </td>
+              </tr>
+          <tr  class="odd views-field-tooltip-row">
+                  <td  class="views-field views-field-label views-field-tooltip views-field-tooltip-field-label views-field-tooltip-row-16">
+            <a href="/readingroom/document/cia-rdp08c01297r000700120017-6">BOUNDARY DISPUTE CLOUDS RIO CONFERENCE</a>          </td>
+                  <td  class="views-field views-field-ds-field-pub-date">
+            March 10, 1965          </td>
+              </tr>
+          <tr  class="even views-field-tooltip-row">
+                  <td  class="views-field views-field-label views-field-tooltip views-field-tooltip-field-label views-field-tooltip-row-17">
+            <a href="/readingroom/document/cia-rdp08c01297r000700120016-7">THE PERUVIAN-ECUADORAN BOUNDARY DISPUTE</a>          </td>
+                  <td  class="views-field views-field-ds-field-pub-date">
+            May 1, 1966          </td>
+              </tr>
+          <tr  class="odd views-field-tooltip-row">
+                  <td  class="views-field views-field-label views-field-tooltip views-field-tooltip-field-label views-field-tooltip-row-18">
+            <a href="/readingroom/document/cia-rdp08c01297r000700080004-5">ECUADOR-PERU MARITIME LIMITS</a>          </td>
+                  <td  class="views-field views-field-ds-field-pub-date">
+            February 17, 1971          </td>
+              </tr>
+          <tr  class="even views-field-tooltip-row views-row-last">
+                  <td  class="views-field views-field-label views-field-tooltip views-field-tooltip-field-label views-field-tooltip-row-19">
+            <a href="/readingroom/document/cia-rdp08c01297r000700120013-0">U.S. AERONAUTICAL CHART SHOWING PORTION PERU-ECUADOR FRONTIER MARKED BOUNDARY IN DISPUTE</a>          </td>
+                  <td  class="views-field views-field-ds-field-pub-date">
+            March 1, 1967          </td>
+              </tr>
+      </tbody>
+</table>
+    </div>
+  
+      <h2 class="element-invisible">Pages</h2><div class="item-list"><ul class="pager"><li class="pager-current first">1</li>
+<li class="pager-item"><a title="Go to page 2" href="/readingroom/advanced-search-view?keyword=ecuador&amp;label=&amp;sm_field_document_number=&amp;sm_field_original_classification=&amp;ds_field_pub_date_op=%3D&amp;ds_field_pub_date%5Bvalue%5D=&amp;ds_field_pub_date%5Bmin%5D=&amp;ds_field_pub_date%5Bmax%5D=&amp;sm_field_content_type=&amp;sm_field_case_number=&amp;page=1">2</a></li>
+<li class="pager-item"><a title="Go to page 3" href="/readingroom/advanced-search-view?keyword=ecuador&amp;label=&amp;sm_field_document_number=&amp;sm_field_original_classification=&amp;ds_field_pub_date_op=%3D&amp;ds_field_pub_date%5Bvalue%5D=&amp;ds_field_pub_date%5Bmin%5D=&amp;ds_field_pub_date%5Bmax%5D=&amp;sm_field_content_type=&amp;sm_field_case_number=&amp;page=2">3</a></li>
+<li class="pager-item"><a title="Go to page 4" href="/readingroom/advanced-search-view?keyword=ecuador&amp;label=&amp;sm_field_document_number=&amp;sm_field_original_classification=&amp;ds_field_pub_date_op=%3D&amp;ds_field_pub_date%5Bvalue%5D=&amp;ds_field_pub_date%5Bmin%5D=&amp;ds_field_pub_date%5Bmax%5D=&amp;sm_field_content_type=&amp;sm_field_case_number=&amp;page=3">4</a></li>
+<li class="pager-item"><a title="Go to page 5" href="/readingroom/advanced-search-view?keyword=ecuador&amp;label=&amp;sm_field_document_number=&amp;sm_field_original_classification=&amp;ds_field_pub_date_op=%3D&amp;ds_field_pub_date%5Bvalue%5D=&amp;ds_field_pub_date%5Bmin%5D=&amp;ds_field_pub_date%5Bmax%5D=&amp;sm_field_content_type=&amp;sm_field_case_number=&amp;page=4">5</a></li>
+<li class="pager-item"><a title="Go to page 6" href="/readingroom/advanced-search-view?keyword=ecuador&amp;label=&amp;sm_field_document_number=&amp;sm_field_original_classification=&amp;ds_field_pub_date_op=%3D&amp;ds_field_pub_date%5Bvalue%5D=&amp;ds_field_pub_date%5Bmin%5D=&amp;ds_field_pub_date%5Bmax%5D=&amp;sm_field_content_type=&amp;sm_field_case_number=&amp;page=5">6</a></li>
+<li class="pager-item"><a title="Go to page 7" href="/readingroom/advanced-search-view?keyword=ecuador&amp;label=&amp;sm_field_document_number=&amp;sm_field_original_classification=&amp;ds_field_pub_date_op=%3D&amp;ds_field_pub_date%5Bvalue%5D=&amp;ds_field_pub_date%5Bmin%5D=&amp;ds_field_pub_date%5Bmax%5D=&amp;sm_field_content_type=&amp;sm_field_case_number=&amp;page=6">7</a></li>
+<li class="pager-item"><a title="Go to page 8" href="/readingroom/advanced-search-view?keyword=ecuador&amp;label=&amp;sm_field_document_number=&amp;sm_field_original_classification=&amp;ds_field_pub_date_op=%3D&amp;ds_field_pub_date%5Bvalue%5D=&amp;ds_field_pub_date%5Bmin%5D=&amp;ds_field_pub_date%5Bmax%5D=&amp;sm_field_content_type=&amp;sm_field_case_number=&amp;page=7">8</a></li>
+<li class="pager-item"><a title="Go to page 9" href="/readingroom/advanced-search-view?keyword=ecuador&amp;label=&amp;sm_field_document_number=&amp;sm_field_original_classification=&amp;ds_field_pub_date_op=%3D&amp;ds_field_pub_date%5Bvalue%5D=&amp;ds_field_pub_date%5Bmin%5D=&amp;ds_field_pub_date%5Bmax%5D=&amp;sm_field_content_type=&amp;sm_field_case_number=&amp;page=8">9</a></li>
+<li class="pager-ellipsis">…</li>
+<li class="pager-next"><a title="Go to next page" href="/readingroom/advanced-search-view?keyword=ecuador&amp;label=&amp;sm_field_document_number=&amp;sm_field_original_classification=&amp;ds_field_pub_date_op=%3D&amp;ds_field_pub_date%5Bvalue%5D=&amp;ds_field_pub_date%5Bmin%5D=&amp;ds_field_pub_date%5Bmax%5D=&amp;sm_field_content_type=&amp;sm_field_case_number=&amp;page=1">next ›</a></li>
+<li class="pager-last last"><a title="Go to last page" href="/readingroom/advanced-search-view?keyword=ecuador&amp;label=&amp;sm_field_document_number=&amp;sm_field_original_classification=&amp;ds_field_pub_date_op=%3D&amp;ds_field_pub_date%5Bvalue%5D=&amp;ds_field_pub_date%5Bmin%5D=&amp;ds_field_pub_date%5Bmax%5D=&amp;sm_field_content_type=&amp;sm_field_case_number=&amp;page=49">last »</a></li>
+</ul></div>  
+  
+  
+      <div class="view-footer">
+      Displaying 1 - 20 of 5452    </div>
+  
+  
+</div>  </div>
+</div>
+  </div>
+                                            </div>
+            </div>
+          </article>
+        </div>
+      </div><!--close main holder-->
+    </section>
+    <footer id="footer">
+
+
+
+
+
+
+<!--       <div class="row body-filler-space">
+            <div class="col-lg-12 text-center align-middle">
+                &nbsp;
+            </div>
+        </div>
+-->
+        <div class="row body-line-divider">
+            <div class="col-lg-12"></div>
+        </div>
+
+        <div class="row navbar-footer">
+            <div class="col-lg-12 navbar-footer-main-wrapper">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="row">
+                            <div class="col-2 navbar-footer-col">
+                                <div class="h-3 navbar-footer-title">Agency</div>
+                                <div class="h-6-reverse" onclick="GoTo('about')"><u>About CIA</u></div>
+                                <div class="h-6-reverse" onclick="GoTo('about')"><u>Organization</u></div>
+                                <div class="h-6-reverse" onclick="GoTo('legacy')"><u>Director of the CIA</u></div>
+                                <div class="h-6-reverse" onclick="GoTo('about')"><u>CIA Museum</u></div>
+                                <div class="h-6-reverse" onclick="GoTo('stories')"><u>News & Stories</u></div>
+                            </div>
+                            <div class="col-2 navbar-footer-col">
+                                <div class="h-3">Careers</div>
+                                <div class="h-6-reverse" onclick="GoTo('careers/working-at-cia')"><u>Working at CIA</u></div>
+                                <div class="h-6-reverse" onclick="GoTo('careers/how-we-hire')"><u>How We Hire</u></div>
+                                <div class="h-6-reverse" onclick="GoTo('careers/student-programs')"><u>Student Programs</u></div>
+                                <div class="h-6-reverse" onclick="GoTo('careers/jobs')"><u>Browse CIA Jobs</u></div>
+                            </div>
+                            <div class="col-2 navbar-footer-col">
+                                <div class="h-3">Resources</div>
+                                <div class="h-6-reverse-extended" onclick="GoTo('readingroom')"><u>Freedom of Information Act (FOIA)</u></div>
+                                <div class="h-6-reverse-extended" onclick="GoTo('resources/csi')"><u>Center for the Study of Intelligence (CSI)</u></div>
+                                <div class="h-6-reverse" onclick="GoTo('spy-kids')"><u>Spy Kids</u></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row navbar-footer-sublink">
+                    <div class="col-12">
+                        <div class="row">
+                            <div class="col-12 col-md-3 my-auto navbar-footer-sublink-col-left-side">
+                                <button class="navbar-report-information button-effect"  onclick="GoTo('report-information')">REPORT INFORMATION</button>
+                            </div>
+                            <div class="col-12 col-md-6 my-auto navbar-footer-sublink-col-left-side">
+                                <button class="navbar-contact-us button-effect"  onclick="GoTo('contact-cia')">CONTACT CIA</button> </div>
+                            <div class="col-12 col-lg-3 my-auto navbar-footer-sublink-col-right-side">
+                                <div class="navbar-footer-social">
+                                    <div class="navbar-footer-social-label">Connect with CIA</div>
+                                    <div class="navbar-footer-social-platforms">
+                                        <img class="social-platform ig" src="/readingroom/sites/all/themes/foia_theme/images/bt/IG.svg" onclick="GoToSocial('instagram')" />
+                                        <img class="social-platform fb" src="/readingroom/sites/all/themes/foia_theme/images/bt/Fb.svg" onclick="GoToSocial('facebook')" />
+                                        <img class="social-platform tw" src="/readingroom/sites/all/themes/foia_theme/images/bt/Tw.svg" onclick="GoToSocial('twitter')" />
+                                        <img class="social-platform li" src="/readingroom/sites/all/themes/foia_theme/images/bt/Li.svg" onclick="GoToSocial('linkedin')" />
+                                        <img class="social-platform yt" src="/readingroom/sites/all/themes/foia_theme/images/bt/YT.svg" onclick="GoToSocial('youtube')" />
+                                        <img class="social-platform fl" src="/readingroom/sites/all/themes/foia_theme/images/bt/Fl.svg" onclick="GoToSocial('flickr')" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!--div class="bg-image"></div-->
+            </div>
+        </div>
+        <div class="row body-line-divider">
+            <div class="col-lg-12"></div>
+        </div>
+        <div class="row navbar-footer-utility">
+            <div class="col-lg-12 navbar-footer-main-wrapper align-middle mid no-gutter">
+                <div class="navbar-footer-utility-links my-auto">
+                    <span class="utility-item" onclick="GoTo('search')"><u>Search CIA.gov</u></span>
+                    <span class="utility-item" onclick="GoTo('site-policies')"><u>Site Policies</u></span>
+                    <span class="utility-item" onclick="GoTo('privacy')"><u>Privacy</u></span>
+                    <span class="utility-item" onclick="GoTo('about/organization/equal-employment-opportunity/no-fear-act')"><u>No FEAR Act</u></span>
+                    <span class="utility-item" onclick="GoTo('about/organization/inspector-general')"><u>Inspector General</u></span>
+                    <span class="utility-item" onclick="location.href = 'https://www.usa.gov'"><u>USA.gov</u></span>
+                    <span class="utility-item" onclick="GoTo('sitemap')"><u>Site Map</u> </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    </footer>
+    <div class="skip"><a href="#wrapper">back to top</a></div>
+      <div class="skip">
+        <a accesskey="b" href="#wrapper">back to top</a>
+      </div>
+    </div>
+  </div><!-- close main block-->
+</div><!-- close wrapper-->
+  </body>
+</html>

@@ -13,6 +13,8 @@ struct sunBEARApp: App {
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
             Item.self,
+            ScrapeJob.self,
+            SavedCIADocument.self,
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
