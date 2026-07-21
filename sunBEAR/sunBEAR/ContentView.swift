@@ -31,6 +31,7 @@ struct ContentView: View {
     @State private var collectionName = ""
     @State private var pendingCollectionDelete: LibraryCollection?
     @State private var deleteCollectionSessions = false
+    @State private var endNoteAlert: String?
 
     private var selectedSessions: [ScrapeSession] { sessions.filter { sessionSelections.contains($0.id) } }
     private var selectedSession: ScrapeSession? { selectedSessions.first }
@@ -125,6 +126,11 @@ struct ContentView: View {
         } message: {
             Text(deleteCollectionSessions ? "The collection and all scrape sessions inside it will be removed from the library. Downloaded files will remain on disk." : "Its scrape sessions will be preserved and moved to Unfiled.")
         }
+        .alert("EndNote Export", isPresented: Binding(get: { endNoteAlert != nil }, set: { if !$0 { endNoteAlert = nil } })) {
+            Button("OK") { endNoteAlert = nil }
+        } message: {
+            Text(endNoteAlert ?? "")
+        }
         .task { createLegacySessionIfNeeded() }
         .frame(minWidth: 1050, minHeight: 650)
     }
@@ -170,8 +176,8 @@ struct ContentView: View {
                         Label("\(collection.name) (\(collection.sessions.count))", systemImage: "folder.fill")
                             .contextMenu {
                                 Button("Select Contents") { sessionSelections = Set(collection.sessions.map(\.id)) }
-                                Button("Download All TSV Files") { exportSessions(collection.sessions, endNote: false) }
-                                Button("Download All EndNote Exports") { exportSessions(collection.sessions, endNote: true) }
+                                Button("Download All TSV Files") { exportSessions(collection.sessions) }
+                                Button("Send Collection to EndNote") { sendToEndNote(collection.sessions) }
                                 Divider()
                                 Button("Rename Collection") { beginRenamingCollection(collection) }
                                 Button("Delete Collection Only", role: .destructive) { prepareCollectionDeletion(collection, includingSessions: false) }
@@ -200,8 +206,8 @@ struct ContentView: View {
                         }
                         moveMenu(for: selectedSessions)
                         Divider()
-                        Button(selectedSessions.count == 1 ? "Download TSV File" : "Download TSV Files") { exportSessions(selectedSessions, endNote: false) }
-                        Button(selectedSessions.count == 1 ? "Download EndNote File" : "Download EndNote Exports") { exportSessions(selectedSessions, endNote: true) }
+                        Button(selectedSessions.count == 1 ? "Download TSV File" : "Download TSV Files") { exportSessions(selectedSessions) }
+                        Button(selectedSessions.count == 1 ? "Send to EndNote" : "Send Selected to EndNote") { sendToEndNote(selectedSessions) }
                         if selectedSessions.count == 1, !session.folderPath.isEmpty {
                             Button("Show Session Folder in Finder") { showInFinder(URL(fileURLWithPath: session.folderPath)) }
                         }
@@ -236,8 +242,8 @@ struct ContentView: View {
                 .disabled(targets.count > 1)
             moveMenu(for: targets)
             Divider()
-            Button(targets.count == 1 ? "Download TSV File" : "Download TSV Files") { exportSessions(targets, endNote: false) }
-            Button(targets.count == 1 ? "Download EndNote File" : "Download EndNote Exports") { exportSessions(targets, endNote: true) }
+            Button(targets.count == 1 ? "Download TSV File" : "Download TSV Files") { exportSessions(targets) }
+            Button(targets.count == 1 ? "Send to EndNote" : "Send Selected to EndNote") { sendToEndNote(targets) }
             if targets.count == 1, !session.folderPath.isEmpty {
                 Button("Show Session Folder in Finder") { showInFinder(URL(fileURLWithPath: session.folderPath)) }
             }
@@ -337,11 +343,11 @@ struct ContentView: View {
 
     @ToolbarContentBuilder private var exportToolbar: some ToolbarContent {
         ToolbarItemGroup {
-            Button { exportSessions(selectedSessions, endNote: false) } label: { Label("Export TSV", systemImage: "square.and.arrow.up") }
+            Button { exportSessions(selectedSessions) } label: { Label("Export TSV", systemImage: "square.and.arrow.up") }
                 .disabled(selectedSessions.isEmpty)
-            Button { exportSessions(selectedSessions, endNote: true) } label: { Label("Export to EndNote", systemImage: "books.vertical") }
+            Button { sendToEndNote(selectedSessions) } label: { Label("Send to EndNote", systemImage: "books.vertical") }
                 .disabled(selectedSessions.isEmpty)
-                .help("Creates an EndNote-ready TSV whose filename begins with *CIA")
+                .help("Opens the selected scrape records directly in EndNote")
         }
     }
 
@@ -352,10 +358,10 @@ struct ContentView: View {
         }
     }
 
-    private func exportSessions(_ sessions: [ScrapeSession], endNote: Bool) {
+    private func exportSessions(_ sessions: [ScrapeSession]) {
         guard !sessions.isEmpty else { return }
         if sessions.count == 1, let session = sessions.first {
-            export(session: session, endNote: endNote)
+            export(session: session)
             return
         }
 
@@ -365,31 +371,30 @@ struct ContentView: View {
         panel.canCreateDirectories = true
         panel.allowsMultipleSelection = false
         panel.prompt = "Choose Export Folder"
-        panel.message = "Choose one folder for \(sessions.count) \(endNote ? "EndNote" : "TSV") exports."
+        panel.message = "Choose one folder for \(sessions.count) TSV exports."
         guard panel.runModal() == .OK, let folder = panel.url else { return }
 
         var exported = 0
         for session in sessions {
-            let prefix = endNote ? "*CIA " : ""
-            let filename = safeExportFilename("\(prefix)\(session.name).tsv")
+            let filename = safeExportFilename("\(session.name).tsv")
             let url = availableExportURL(folder.appendingPathComponent(filename))
             let sortedItems = session.items.sorted { $0.title.localizedStandardCompare($1.title) == .orderedAscending }
-            let value = endNote ? ExportService.endNoteTSV(items: sortedItems) : ExportService.preservationTSV(items: sortedItems)
+            let value = ExportService.preservationTSV(items: sortedItems)
             if (try? value.write(to: url, atomically: true, encoding: .utf8)) != nil { exported += 1 }
         }
         showInFinder(folder)
         scraper.status = "Exported \(exported) of \(sessions.count) files to \(folder.lastPathComponent)."
     }
 
-    private func export(session: ScrapeSession, endNote: Bool) {
+    private func export(session: ScrapeSession) {
         let panel = NSSavePanel()
         panel.allowedContentTypes = [.tabSeparatedText]
-        panel.nameFieldStringValue = endNote ? "*CIA \(session.name).tsv" : "\(session.name).tsv"
+        panel.nameFieldStringValue = "\(session.name).tsv"
         if !session.folderPath.isEmpty { panel.directoryURL = URL(fileURLWithPath: session.folderPath) }
         panel.canCreateDirectories = true
         guard panel.runModal() == .OK, let url = panel.url else { return }
         let sessionItems = session.items.sorted { $0.title.localizedStandardCompare($1.title) == .orderedAscending }
-        let value = endNote ? ExportService.endNoteTSV(items: sessionItems) : ExportService.preservationTSV(items: sessionItems)
+        let value = ExportService.preservationTSV(items: sessionItems)
         do {
             try value.write(to: url, atomically: true, encoding: .utf8)
             showInFinder(url)
@@ -400,6 +405,24 @@ struct ContentView: View {
 
     private func showInFinder(_ url: URL) {
         NSWorkspace.shared.activateFileViewerSelecting([url])
+    }
+
+    private func sendToEndNote(_ sessions: [ScrapeSession]) {
+        guard !sessions.isEmpty else { return }
+        let sortedSessions = sessions.sorted { $0.startedAt < $1.startedAt }
+        let combinedItems = sortedSessions.flatMap { $0.items }.sorted {
+            $0.title.localizedStandardCompare($1.title) == .orderedAscending
+        }
+        let name = sessions.count == 1 ? sessions[0].name : "\(sessions.count) sunBEAR sessions"
+        Task { @MainActor in
+            do {
+                try await EndNoteService.send(items: combinedItems, sessionName: name)
+                scraper.status = "Sent \(combinedItems.count) records to EndNote. Choose the destination library in EndNote if prompted."
+            } catch {
+                endNoteAlert = error.localizedDescription
+                scraper.status = "EndNote export failed: \(error.localizedDescription)"
+            }
+        }
     }
 
     private func deleteSessions(_ sessions: [ScrapeSession]) {

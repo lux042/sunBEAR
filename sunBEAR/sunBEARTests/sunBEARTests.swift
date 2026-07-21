@@ -95,6 +95,30 @@ final class sunBEARTests: XCTestCase {
         XCTAssertEqual(values[15], "Summary")
     }
 
+    @MainActor
+    func testDirectEndNoteImportIncludesCIAFieldsAndAttachment() {
+        let item = Item(
+            title: "A title", documentType: "CREST", collection: "General CIA Records",
+            documentNumber: "CIA-RDP-1", releaseDecision: "RIPPUB", originalClassification: "K",
+            pageCount: 3, documentCreationDate: "December 14, 2016",
+            documentReleaseDate: "September 27, 2002", sequenceNumber: "9",
+            publicationDate: "June 1, 1960", contentType: "MF", caseNumber: "CASE-1",
+            recordURL: "https://example.com/record", pdfURLs: ["https://example.com/file.pdf"],
+            body: "Summary\nwith a line break", localPDFPaths: ["/tmp/file.pdf"]
+        )
+        let export = ExportService.endNoteImport(items: [item])
+
+        XCTAssertTrue(export.hasPrefix("%0 CIA\n"))
+        XCTAssertTrue(export.contains("%T A title\n"))
+        XCTAssertTrue(export.contains("%P 3\n"))
+        XCTAssertTrue(export.contains("%8 June 1, 1960\n"))
+        XCTAssertTrue(export.contains("%Z Collection: General CIA Records\n"))
+        XCTAssertTrue(export.contains("%U https://example.com/record\n"))
+        XCTAssertTrue(export.contains("%U https://example.com/file.pdf\n"))
+        XCTAssertTrue(export.contains("%X Summary with a line break\n"))
+        XCTAssertTrue(export.contains("%> /tmp/file.pdf\n"))
+    }
+
     func testScrapeFolderUsesSearchAndTimestamp() throws {
         let url = try XCTUnwrap(URL(string: "https://www.cia.gov/readingroom/advanced-search-view?keyword=Cuba"))
         let date = try XCTUnwrap(Calendar(identifier: .gregorian).date(from: DateComponents(timeZone: TimeZone(secondsFromGMT: 0), year: 2026, month: 7, day: 21, hour: 14, minute: 37, second: 2)))
