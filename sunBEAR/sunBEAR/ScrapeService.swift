@@ -13,8 +13,9 @@ final class ScrapeService {
     private let pageLoader = WebPageLoader()
 
     @discardableResult
-    func start(searchURL: URL, destination: URL, shouldDownloadPDFs: Bool, context: ModelContext) -> ScrapeSession? {
+    func start(searchURL: URL, destination: URL, shouldDownloadPDFs: Bool, pageLimit: Int, context: ModelContext) -> ScrapeSession? {
         guard !isRunning else { return nil }
+        let pageLimit = Self.clampedPageLimit(pageLimit)
         isRunning = true
         completed = 0
         total = 0
@@ -37,7 +38,7 @@ final class ScrapeService {
                 var pageURL: URL? = searchURL
                 var visitedPages = Set<URL>()
                 var documentURLs: [URL] = []
-                while let current = pageURL, visitedPages.count < Self.maximumSearchPages, visitedPages.insert(current).inserted {
+                while let current = pageURL, visitedPages.count < pageLimit, visitedPages.insert(current).inserted {
                     status = "Reading search page \(visitedPages.count)…"
                     session.pagesScraped = visitedPages.count
                     let page = try await fetchHTML(current)
@@ -45,9 +46,9 @@ final class ScrapeService {
                     if current.path.contains("advanced-search"), !page.finalURL.path.contains("advanced-search") {
                         throw ScrapeError.searchRedirected(page.finalURL)
                     }
-                    documentURLs.append(contentsOf: CIAHTMLParser.resultLinks(in: html, baseURL: current))
+                    documentURLs.append(contentsOf: CIAHTMLParser.resultLinks(in: html, baseURL: page.finalURL))
                     documentURLs = Array(Set(documentURLs)).sorted { $0.absoluteString < $1.absoluteString }
-                    pageURL = CIAHTMLParser.nextPage(in: html, baseURL: current)
+                    pageURL = CIAHTMLParser.nextPage(in: html, baseURL: page.finalURL)
                     try Task.checkCancellation()
                     try await Task.sleep(for: .milliseconds(350))
                 }
@@ -86,6 +87,10 @@ final class ScrapeService {
     }
 
     func cancel() { task?.cancel() }
+
+    static func clampedPageLimit(_ value: Int) -> Int {
+        min(max(value, 1), maximumSearchPages)
+    }
 
     private func fetchHTML(_ url: URL) async throws -> (html: String, finalURL: URL) {
         try await pageLoader.html(at: url)

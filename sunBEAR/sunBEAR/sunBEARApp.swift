@@ -14,6 +14,7 @@ struct sunBEARApp: App {
         let schema = Schema([
             Item.self,
             ScrapeSession.self,
+            LibraryCollection.self,
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 

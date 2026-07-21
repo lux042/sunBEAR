@@ -7,19 +7,45 @@ struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var items: [Item]
     @Query(sort: \ScrapeSession.startedAt, order: .reverse) private var sessions: [ScrapeSession]
+    @Query(sort: \LibraryCollection.name) private var collections: [LibraryCollection]
     @State private var scraper = ScrapeService()
     @State private var searchURL = "https://www.cia.gov/readingroom/search/site"
     @State private var downloadFolder: URL?
     @State private var choosingFolder = false
     @State private var showingCIASearch = false
     @State private var shouldDownloadPDFs = true
+    @State private var requestedPageCount = 1
     @State private var filter = ""
+    @State private var sessionFilter = ""
+    @State private var sessionSort = SessionSort.newest
     @State private var sortOrder = [KeyPathComparator(\Item.title)]
     @State private var selection: Item.ID?
-    @State private var sessionSelection: ScrapeSession.ID?
-    @State private var pendingDelete: ScrapeSession?
+    @State private var sessionSelections = Set<ScrapeSession.ID>()
+    @State private var pendingDeleteSessions: [ScrapeSession] = []
+    @State private var renamingSession: ScrapeSession?
+    @State private var renameText = ""
+    @State private var expandedCollections = Set<PersistentIdentifier>()
+    @State private var showingNewCollection = false
+    @State private var newCollectionName = ""
+    @State private var renamingCollection: LibraryCollection?
+    @State private var collectionName = ""
+    @State private var pendingCollectionDelete: LibraryCollection?
+    @State private var deleteCollectionSessions = false
 
-    private var selectedSession: ScrapeSession? { sessions.first { $0.id == sessionSelection } }
+    private var selectedSessions: [ScrapeSession] { sessions.filter { sessionSelections.contains($0.id) } }
+    private var selectedSession: ScrapeSession? { selectedSessions.first }
+
+    private var displayedSessions: [ScrapeSession] {
+        let filtered = sessionFilter.isEmpty ? sessions : sessions.filter {
+            $0.name.localizedCaseInsensitiveContains(sessionFilter)
+        }
+        switch sessionSort {
+        case .newest: return filtered.sorted { $0.startedAt > $1.startedAt }
+        case .oldest: return filtered.sorted { $0.startedAt < $1.startedAt }
+        case .name: return filtered.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+        case .records: return filtered.sorted { $0.items.count > $1.items.count }
+        }
+    }
 
     private var displayedItems: [Item] {
         let sessionItems = selectedSession?.items ?? []
@@ -53,8 +79,8 @@ struct ContentView: View {
             CIASearchBrowser { url in
                 searchURL = url.absoluteString
                 if let folder = downloadFolder {
-                    if let session = scraper.start(searchURL: url, destination: folder, shouldDownloadPDFs: shouldDownloadPDFs, context: modelContext) {
-                        sessionSelection = session.id
+                    if let session = scraper.start(searchURL: url, destination: folder, shouldDownloadPDFs: shouldDownloadPDFs, pageLimit: requestedPageCount, context: modelContext) {
+                        sessionSelections = [session.id]
                     }
                 } else {
                     scraper.status = "Search imported—choose a PDF folder, then start the scrape."
@@ -62,14 +88,42 @@ struct ContentView: View {
             }
         }
         .toolbar { exportToolbar }
-        .alert("Delete this scrape from the library?", isPresented: Binding(get: { pendingDelete != nil }, set: { if !$0 { pendingDelete = nil } })) {
-            Button("Cancel", role: .cancel) { pendingDelete = nil }
+        .alert(pendingDeleteSessions.count == 1 ? "Delete this scrape from the library?" : "Delete \(pendingDeleteSessions.count) scrapes from the library?", isPresented: Binding(get: { !pendingDeleteSessions.isEmpty }, set: { if !$0 { pendingDeleteSessions = [] } })) {
+            Button("Cancel", role: .cancel) { pendingDeleteSessions = [] }
             Button("Delete from Library", role: .destructive) {
-                if let session = pendingDelete { deleteSession(session) }
-                pendingDelete = nil
+                deleteSessions(pendingDeleteSessions)
+                pendingDeleteSessions = []
             }
         } message: {
             Text("Its library records will be deleted. Downloaded PDFs and TSV files will remain on disk.")
+        }
+        .alert("Rename scrape session", isPresented: Binding(get: { renamingSession != nil }, set: { if !$0 { renamingSession = nil } })) {
+            TextField("Session name", text: $renameText)
+            Button("Cancel", role: .cancel) { renamingSession = nil }
+            Button("Rename") { finishRenamingSession() }
+                .disabled(renameText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+        } message: {
+            Text("This changes the name shown in the library and used for future exports. It does not rename the existing folder on disk.")
+        }
+        .alert("New collection", isPresented: $showingNewCollection) {
+            TextField("Collection name", text: $newCollectionName)
+            Button("Cancel", role: .cancel) { newCollectionName = "" }
+            Button("Create") { createCollection() }
+                .disabled(newCollectionName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+        } message: {
+            Text("Collections group related scrape sessions like folders in Finder.")
+        }
+        .alert("Rename collection", isPresented: Binding(get: { renamingCollection != nil }, set: { if !$0 { renamingCollection = nil } })) {
+            TextField("Collection name", text: $collectionName)
+            Button("Cancel", role: .cancel) { renamingCollection = nil }
+            Button("Rename") { finishRenamingCollection() }
+                .disabled(collectionName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+        }
+        .alert(deleteCollectionSessions ? "Delete collection and its contents?" : "Delete this collection?", isPresented: Binding(get: { pendingCollectionDelete != nil }, set: { if !$0 { pendingCollectionDelete = nil } })) {
+            Button("Cancel", role: .cancel) { pendingCollectionDelete = nil }
+            Button(deleteCollectionSessions ? "Delete Collection and Sessions" : "Delete Collection", role: .destructive) { deletePendingCollection() }
+        } message: {
+            Text(deleteCollectionSessions ? "The collection and all scrape sessions inside it will be removed from the library. Downloaded files will remain on disk." : "Its scrape sessions will be preserved and moved to Unfiled.")
         }
         .task { createLegacySessionIfNeeded() }
         .frame(minWidth: 1050, minHeight: 650)
@@ -79,28 +133,142 @@ struct ContentView: View {
         VStack(alignment: .leading, spacing: 10) {
             scrapeControls.padding([.horizontal, .top])
             Divider()
-            Text("Scrape sessions").font(.headline).padding(.horizontal)
-            List(selection: $sessionSelection) {
-                ForEach(sessions) { session in
-                    HStack {
-                        Image(systemName: "folder")
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(session.name).lineLimit(2)
-                            Text("\(session.items.count) records · \(session.pagesScraped) page\(session.pagesScraped == 1 ? "" : "s")")
-                                .font(.caption).foregroundStyle(.secondary)
+            HStack {
+                Text("Library folders").font(.headline)
+                Spacer()
+                Button { beginCreatingCollection() } label: {
+                    Label("New Collection", systemImage: "folder.badge.plus")
+                        .labelStyle(.iconOnly)
+                }
+                .help("Create a collection")
+                Menu {
+                    Picker("Sort sessions", selection: $sessionSort) {
+                        ForEach(SessionSort.allCases) { option in
+                            Label(option.title, systemImage: option.icon).tag(option)
                         }
                     }
-                    .tag(session.id)
-                    .contextMenu {
-                        Button("Download TSV File") { export(session: session, endNote: false) }
-                        Button("Download EndNote File") { export(session: session, endNote: true) }
-                        if !session.folderPath.isEmpty {
+                } label: {
+                    Label("Sort", systemImage: "arrow.up.arrow.down.circle")
+                        .labelStyle(.iconOnly)
+                }
+                .help("Sort library folders")
+            }
+            .padding(.horizontal)
+            TextField("Find a scrape session", text: $sessionFilter)
+                .textFieldStyle(.roundedBorder)
+                .padding(.horizontal)
+            List(selection: $sessionSelections) {
+                ForEach(collections) { collection in
+                    DisclosureGroup(isExpanded: expansionBinding(for: collection)) {
+                        let collectionSessions = displayedSessions.filter { $0.libraryCollection?.persistentModelID == collection.persistentModelID }
+                        if collectionSessions.isEmpty {
+                            Text("No sessions").font(.caption).foregroundStyle(.secondary)
+                        } else {
+                            ForEach(collectionSessions) { session in sessionRow(session) }
+                        }
+                    } label: {
+                        Label("\(collection.name) (\(collection.sessions.count))", systemImage: "folder.fill")
+                            .contextMenu {
+                                Button("Select Contents") { sessionSelections = Set(collection.sessions.map(\.id)) }
+                                Button("Download All TSV Files") { exportSessions(collection.sessions, endNote: false) }
+                                Button("Download All EndNote Exports") { exportSessions(collection.sessions, endNote: true) }
+                                Divider()
+                                Button("Rename Collection") { beginRenamingCollection(collection) }
+                                Button("Delete Collection Only", role: .destructive) { prepareCollectionDeletion(collection, includingSessions: false) }
+                                Button("Delete Collection and Contents", role: .destructive) { prepareCollectionDeletion(collection, includingSessions: true) }
+                            }
+                    }
+                }
+                let unfiled = displayedSessions.filter { $0.libraryCollection == nil }
+                if !unfiled.isEmpty {
+                    Section("Unfiled") {
+                        ForEach(unfiled) { session in sessionRow(session) }
+                    }
+                }
+                if collections.isEmpty && unfiled.isEmpty {
+                    Text(sessionFilter.isEmpty ? "No scrape sessions yet" : "No matching sessions")
+                        .foregroundStyle(.secondary)
+                }
+            }
+            if !selectedSessions.isEmpty, let session = selectedSession {
+                HStack {
+                    Text("\(selectedSessions.count) selected").font(.caption).foregroundStyle(.secondary)
+                    Spacer()
+                    Menu {
+                        if selectedSessions.count == 1 {
+                            Button("Rename Session") { beginRenamingSession(session) }
+                        }
+                        moveMenu(for: selectedSessions)
+                        Divider()
+                        Button(selectedSessions.count == 1 ? "Download TSV File" : "Download TSV Files") { exportSessions(selectedSessions, endNote: false) }
+                        Button(selectedSessions.count == 1 ? "Download EndNote File" : "Download EndNote Exports") { exportSessions(selectedSessions, endNote: true) }
+                        if selectedSessions.count == 1, !session.folderPath.isEmpty {
                             Button("Show Session Folder in Finder") { showInFinder(URL(fileURLWithPath: session.folderPath)) }
                         }
                         Divider()
-                        Button("Delete from Library", role: .destructive) { pendingDelete = session }
+                        Button("Delete Selected from Library", role: .destructive) { pendingDeleteSessions = selectedSessions }
+                    } label: {
+                        Label("More", systemImage: "ellipsis.circle")
                     }
                 }
+                .labelStyle(.iconOnly)
+                .padding([.horizontal, .bottom])
+            }
+        }
+    }
+
+    private func sessionRow(_ session: ScrapeSession) -> some View {
+        HStack {
+            Image(systemName: session.isComplete ? "doc.text.fill" : "doc.badge.gearshape")
+                .foregroundStyle(session.isComplete ? Color.accentColor : Color.secondary)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(session.name).lineLimit(2)
+                Text("\(session.items.count) records · \(session.pagesScraped) page\(session.pagesScraped == 1 ? "" : "s")")
+                    .font(.caption).foregroundStyle(.secondary)
+                Text(session.startedAt, format: .dateTime.month(.abbreviated).day().year().hour().minute())
+                    .font(.caption2).foregroundStyle(.tertiary)
+            }
+        }
+        .tag(session.id)
+        .contextMenu {
+            let targets = sessionSelections.contains(session.id) ? selectedSessions : [session]
+            Button("Rename Session") { beginRenamingSession(session) }
+                .disabled(targets.count > 1)
+            moveMenu(for: targets)
+            Divider()
+            Button(targets.count == 1 ? "Download TSV File" : "Download TSV Files") { exportSessions(targets, endNote: false) }
+            Button(targets.count == 1 ? "Download EndNote File" : "Download EndNote Exports") { exportSessions(targets, endNote: true) }
+            if targets.count == 1, !session.folderPath.isEmpty {
+                Button("Show Session Folder in Finder") { showInFinder(URL(fileURLWithPath: session.folderPath)) }
+            }
+            Divider()
+            Button(targets.count == 1 ? "Delete from Library" : "Delete Selected from Library", role: .destructive) { pendingDeleteSessions = targets }
+        }
+    }
+
+    private func moveMenu(for targets: [ScrapeSession]) -> some View {
+        Menu(targets.count == 1 ? "Move to Collection" : "Move Selected to Collection") {
+            Button {
+                move(targets, to: nil)
+            } label: {
+                if targets.allSatisfy({ $0.libraryCollection == nil }) { Label("Unfiled", systemImage: "checkmark") }
+                else { Text("Unfiled") }
+            }
+            Divider()
+            ForEach(collections) { collection in
+                Button {
+                    move(targets, to: collection)
+                } label: {
+                    if targets.allSatisfy({ $0.libraryCollection?.persistentModelID == collection.persistentModelID }) {
+                        Label(collection.name, systemImage: "checkmark")
+                    } else {
+                        Text(collection.name)
+                    }
+                }
+            }
+            Divider()
+            Button("New Collection…") {
+                beginCreatingCollection()
             }
         }
     }
@@ -122,6 +290,8 @@ struct ContentView: View {
             .help(downloadFolder?.path ?? "Every PDF linked by every result will be downloaded here")
             Toggle("Download PDFs", isOn: $shouldDownloadPDFs)
                 .help("Turn off to collect metadata and abstracts without downloading PDF files")
+            Stepper("Search pages: \(requestedPageCount)", value: $requestedPageCount, in: 1...ScrapeService.maximumSearchPages)
+                .help("Choose how many CIA search-result pages to scrape, up to 10")
             if scraper.isRunning {
                 ProgressView(value: scraper.total == 0 ? nil : Double(scraper.completed), total: Double(max(scraper.total, 1)))
                 Button("Stop", role: .destructive) { scraper.cancel() }
@@ -134,10 +304,22 @@ struct ContentView: View {
     }
 
     private var library: some View {
-        Group {
+        VStack(spacing: 0) {
             if selectedSession == nil {
                 ContentUnavailableView("Select a scrape session", systemImage: "folder")
             } else {
+                HStack {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(selectedSession?.name ?? "").font(.headline).lineLimit(1)
+                        Text("\(displayedItems.count) of \(selectedSession?.items.count ?? 0) records")
+                            .font(.caption).foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                    if !filter.isEmpty { Button("Clear Search") { filter = "" } }
+                }
+                .padding(.horizontal)
+                .padding(.vertical, 8)
+                Divider()
                 Table(displayedItems, selection: $selection, sortOrder: $sortOrder) {
             TableColumn("Title", value: \Item.title) { Text($0.title).lineLimit(2) }.width(min: 240, ideal: 360)
             TableColumn("Collection", value: \Item.collection) { Text($0.collection) }.width(min: 120, ideal: 180)
@@ -155,19 +337,48 @@ struct ContentView: View {
 
     @ToolbarContentBuilder private var exportToolbar: some ToolbarContent {
         ToolbarItemGroup {
-            Button { if let session = selectedSession { export(session: session, endNote: false) } } label: { Label("Export TSV", systemImage: "square.and.arrow.up") }
-                .disabled(selectedSession?.items.isEmpty != false)
-            Button { if let session = selectedSession { export(session: session, endNote: true) } } label: { Label("Export to EndNote", systemImage: "books.vertical") }
-                .disabled(selectedSession?.items.isEmpty != false)
+            Button { exportSessions(selectedSessions, endNote: false) } label: { Label("Export TSV", systemImage: "square.and.arrow.up") }
+                .disabled(selectedSessions.isEmpty)
+            Button { exportSessions(selectedSessions, endNote: true) } label: { Label("Export to EndNote", systemImage: "books.vertical") }
+                .disabled(selectedSessions.isEmpty)
                 .help("Creates an EndNote-ready TSV whose filename begins with *CIA")
         }
     }
 
     private func startScrape() {
         guard let url = URL(string: searchURL), let folder = downloadFolder else { return }
-        if let session = scraper.start(searchURL: url, destination: folder, shouldDownloadPDFs: shouldDownloadPDFs, context: modelContext) {
-            sessionSelection = session.id
+        if let session = scraper.start(searchURL: url, destination: folder, shouldDownloadPDFs: shouldDownloadPDFs, pageLimit: requestedPageCount, context: modelContext) {
+            sessionSelections = [session.id]
         }
+    }
+
+    private func exportSessions(_ sessions: [ScrapeSession], endNote: Bool) {
+        guard !sessions.isEmpty else { return }
+        if sessions.count == 1, let session = sessions.first {
+            export(session: session, endNote: endNote)
+            return
+        }
+
+        let panel = NSOpenPanel()
+        panel.canChooseFiles = false
+        panel.canChooseDirectories = true
+        panel.canCreateDirectories = true
+        panel.allowsMultipleSelection = false
+        panel.prompt = "Choose Export Folder"
+        panel.message = "Choose one folder for \(sessions.count) \(endNote ? "EndNote" : "TSV") exports."
+        guard panel.runModal() == .OK, let folder = panel.url else { return }
+
+        var exported = 0
+        for session in sessions {
+            let prefix = endNote ? "*CIA " : ""
+            let filename = safeExportFilename("\(prefix)\(session.name).tsv")
+            let url = availableExportURL(folder.appendingPathComponent(filename))
+            let sortedItems = session.items.sorted { $0.title.localizedStandardCompare($1.title) == .orderedAscending }
+            let value = endNote ? ExportService.endNoteTSV(items: sortedItems) : ExportService.preservationTSV(items: sortedItems)
+            if (try? value.write(to: url, atomically: true, encoding: .utf8)) != nil { exported += 1 }
+        }
+        showInFinder(folder)
+        scraper.status = "Exported \(exported) of \(sessions.count) files to \(folder.lastPathComponent)."
     }
 
     private func export(session: ScrapeSession, endNote: Bool) {
@@ -191,10 +402,110 @@ struct ContentView: View {
         NSWorkspace.shared.activateFileViewerSelecting([url])
     }
 
-    private func deleteSession(_ session: ScrapeSession) {
-        if sessionSelection == session.id { sessionSelection = nil; selection = nil }
-        modelContext.delete(session)
+    private func deleteSessions(_ sessions: [ScrapeSession]) {
+        let ids = Set(sessions.map(\.id))
+        sessionSelections.subtract(ids)
+        if selectedSession == nil { selection = nil }
+        for session in sessions { modelContext.delete(session) }
         try? modelContext.save()
+    }
+
+    private func safeExportFilename(_ value: String) -> String {
+        let invalid = CharacterSet(charactersIn: "/\\:?\"<>|").union(.newlines)
+        let cleaned = value.components(separatedBy: invalid).filter { !$0.isEmpty }.joined(separator: "-")
+        return cleaned.isEmpty ? "sunBEAR export.tsv" : String(cleaned.prefix(180))
+    }
+
+    private func availableExportURL(_ url: URL) -> URL {
+        guard FileManager.default.fileExists(atPath: url.path) else { return url }
+        let folder = url.deletingLastPathComponent()
+        let base = url.deletingPathExtension().lastPathComponent
+        let ext = url.pathExtension
+        var number = 2
+        while true {
+            let candidate = folder.appendingPathComponent("\(base)-\(number)").appendingPathExtension(ext)
+            if !FileManager.default.fileExists(atPath: candidate.path) { return candidate }
+            number += 1
+        }
+    }
+
+    private func beginRenamingSession(_ session: ScrapeSession) {
+        renameText = session.name
+        renamingSession = session
+    }
+
+    private func finishRenamingSession() {
+        guard let session = renamingSession else { return }
+        let value = renameText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !value.isEmpty else { return }
+        session.name = value
+        try? modelContext.save()
+        renamingSession = nil
+    }
+
+    private func expansionBinding(for collection: LibraryCollection) -> Binding<Bool> {
+        Binding(
+            get: { expandedCollections.contains(collection.persistentModelID) },
+            set: { expanded in
+                if expanded { expandedCollections.insert(collection.persistentModelID) }
+                else { expandedCollections.remove(collection.persistentModelID) }
+            }
+        )
+    }
+
+    private func beginCreatingCollection() {
+        newCollectionName = ""
+        showingNewCollection = true
+    }
+
+    private func createCollection() {
+        let name = newCollectionName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !name.isEmpty else { return }
+        let collection = LibraryCollection(name: name)
+        modelContext.insert(collection)
+        try? modelContext.save()
+        expandedCollections.insert(collection.persistentModelID)
+        newCollectionName = ""
+    }
+
+    private func beginRenamingCollection(_ collection: LibraryCollection) {
+        collectionName = collection.name
+        renamingCollection = collection
+    }
+
+    private func finishRenamingCollection() {
+        guard let collection = renamingCollection else { return }
+        let name = collectionName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !name.isEmpty else { return }
+        collection.name = name
+        try? modelContext.save()
+        renamingCollection = nil
+    }
+
+    private func move(_ sessions: [ScrapeSession], to collection: LibraryCollection?) {
+        for session in sessions { session.libraryCollection = collection }
+        if let collection { expandedCollections.insert(collection.persistentModelID) }
+        try? modelContext.save()
+    }
+
+    private func deletePendingCollection() {
+        guard let collection = pendingCollectionDelete else { return }
+        let contents = Array(collection.sessions)
+        if deleteCollectionSessions {
+            deleteSessions(contents)
+        } else {
+            for session in contents { session.libraryCollection = nil }
+        }
+        expandedCollections.remove(collection.persistentModelID)
+        modelContext.delete(collection)
+        try? modelContext.save()
+        pendingCollectionDelete = nil
+        deleteCollectionSessions = false
+    }
+
+    private func prepareCollectionDeletion(_ collection: LibraryCollection, includingSessions: Bool) {
+        deleteCollectionSessions = includingSessions
+        pendingCollectionDelete = collection
     }
 
     private func createLegacySessionIfNeeded() {
@@ -204,7 +515,29 @@ struct ContentView: View {
         modelContext.insert(legacy)
         for item in orphaned { item.session = legacy }
         try? modelContext.save()
-        if sessionSelection == nil { sessionSelection = legacy.id }
+        if sessionSelections.isEmpty { sessionSelections = [legacy.id] }
+    }
+}
+
+private enum SessionSort: String, CaseIterable, Identifiable {
+    case newest, oldest, name, records
+
+    var id: Self { self }
+    var title: String {
+        switch self {
+        case .newest: "Newest first"
+        case .oldest: "Oldest first"
+        case .name: "Name"
+        case .records: "Most records"
+        }
+    }
+    var icon: String {
+        switch self {
+        case .newest: "calendar.badge.clock"
+        case .oldest: "calendar"
+        case .name: "textformat"
+        case .records: "doc.on.doc"
+        }
     }
 }
 
@@ -246,5 +579,5 @@ private struct DocumentDetailView: View {
 }
 
 #Preview {
-    ContentView().modelContainer(for: [Item.self, ScrapeSession.self], inMemory: true)
+    ContentView().modelContainer(for: [Item.self, ScrapeSession.self, LibraryCollection.self], inMemory: true)
 }

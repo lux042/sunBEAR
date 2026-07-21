@@ -14,6 +14,25 @@ final class sunBEARTests: XCTestCase {
         XCTAssertEqual(CIAHTMLParser.nextPage(in: html, baseURL: base)?.absoluteString, "https://www.cia.gov/readingroom/search/site/test?page=1")
     }
 
+    func testCIAStructuredNextPageLink() throws {
+        let base = try XCTUnwrap(URL(string: "https://www.cia.gov/readingroom/advanced-search-view?keyword=Germany"))
+        let html = """
+        <nav class="pager">
+          <ul>
+            <li class="pager__item pager__item--next">
+              <a title="Go to next page" href="?keyword=Germany&amp;page=1">
+                <span>Next</span><span aria-hidden="true">›</span>
+              </a>
+            </li>
+          </ul>
+        </nav>
+        """
+        XCTAssertEqual(
+            CIAHTMLParser.nextPage(in: html, baseURL: base)?.absoluteString,
+            "https://www.cia.gov/readingroom/advanced-search-view?keyword=Germany&page=1"
+        )
+    }
+
     func testDocumentMetadataAndAllPDFs() throws {
         let url = try XCTUnwrap(URL(string: "https://www.cia.gov/readingroom/document/test"))
         let html = """
@@ -85,5 +104,8 @@ final class sunBEARTests: XCTestCase {
     @MainActor
     func testPaginationIsCappedAtTenPages() {
         XCTAssertEqual(ScrapeService.maximumSearchPages, 10)
+        XCTAssertEqual(ScrapeService.clampedPageLimit(0), 1)
+        XCTAssertEqual(ScrapeService.clampedPageLimit(6), 6)
+        XCTAssertEqual(ScrapeService.clampedPageLimit(20), 10)
     }
 }

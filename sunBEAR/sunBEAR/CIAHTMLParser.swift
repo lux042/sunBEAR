@@ -20,8 +20,10 @@ enum CIAHTMLParser {
 
     static func nextPage(in html: String, baseURL: URL) -> URL? {
         let patterns = [
-            #"<a[^>]+href=[\"']([^\"']+)[\"'][^>]+rel=[\"']next[\"']"#,
-            #"<a[^>]+href=[\"']([^\"']+)[\"'][^>]*>\s*(?:Next|Next ›|›)\s*</a>"#
+            #"(?is)<a(?=[^>]*\brel\s*=\s*[\"']next[\"'])[^>]*\bhref\s*=\s*[\"']([^\"']+)[\"']"#,
+            #"(?is)<a(?=[^>]*(?:title|aria-label)\s*=\s*[\"'][^\"']*next[^\"']*[\"'])[^>]*\bhref\s*=\s*[\"']([^\"']+)[\"']"#,
+            #"(?is)<li(?=[^>]*class\s*=\s*[\"'][^\"']*(?:pager__item--next|pager-next)[^\"']*[\"'])[^>]*>.*?<a[^>]*\bhref\s*=\s*[\"']([^\"']+)[\"']"#,
+            #"(?is)<a[^>]+href\s*=\s*[\"']([^\"']+)[\"'][^>]*>\s*(?:<[^>]+>\s*)*(?:Next|Next\s*›|›)"#
         ]
         for pattern in patterns {
             if let href = firstCapture(pattern, in: html), let url = URL(string: decode(href), relativeTo: baseURL)?.absoluteURL {
