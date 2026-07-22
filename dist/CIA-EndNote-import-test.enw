@@ -1,0 +1,9 @@
+%0 CIA
+%T sunBEAR CIA import test
+%Z Document Type: CREST | Collection: General CIA Records | Document Number (FOIA) / ESDN (CREST): CIA-TEST-001 | Release Decision: RIPPUB | Original Classification: SECRET | Document Creation Date: July 1, 1960 | Document Release Date: July 1, 2000 | Sequence Number: 1 | Content Type: REPORT | Case Number: TEST-CASE
+%P 12
+%8 July 1, 1960
+%U https://www.cia.gov/readingroom/docs/CIA-TEST-001.pdf
+%U https://www.cia.gov/readingroom/document/cia-test-001
+%X This is a diagnostic abstract created to verify the custom CIA reference type.
+

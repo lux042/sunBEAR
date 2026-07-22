@@ -110,13 +110,30 @@ final class sunBEARTests: XCTestCase {
 
         XCTAssertTrue(export.hasPrefix("%0 CIA\n"))
         XCTAssertTrue(export.contains("%T A title\n"))
+        let notesLines = export.components(separatedBy: .newlines).filter { $0.hasPrefix("%Z ") }
+        XCTAssertEqual(notesLines.count, 1)
+        let notes = notesLines[0]
+        XCTAssertTrue(notes.contains("Document Type: CREST"))
+        XCTAssertTrue(notes.contains("Collection: General CIA Records"))
+        XCTAssertTrue(notes.contains("Document Number (FOIA) / ESDN (CREST): CIA-RDP-1"))
+        XCTAssertTrue(notes.contains("Release Decision: RIPPUB"))
+        XCTAssertTrue(notes.contains("Original Classification: K"))
         XCTAssertTrue(export.contains("%P 3\n"))
+        XCTAssertTrue(notes.contains("Document Creation Date: December 14, 2016"))
+        XCTAssertTrue(notes.contains("Document Release Date: September 27, 2002"))
+        XCTAssertTrue(notes.contains("Sequence Number: 9"))
         XCTAssertTrue(export.contains("%8 June 1, 1960\n"))
-        XCTAssertTrue(export.contains("%Z Collection: General CIA Records\n"))
+        XCTAssertTrue(notes.contains("Content Type: MF"))
+        XCTAssertTrue(notes.contains("Case Number: CASE-1"))
         XCTAssertTrue(export.contains("%U https://example.com/record\n"))
         XCTAssertTrue(export.contains("%U https://example.com/file.pdf\n"))
+        XCTAssertLessThan(
+            export.range(of: "%U https://example.com/file.pdf")!.lowerBound,
+            export.range(of: "%U https://example.com/record")!.lowerBound
+        )
         XCTAssertTrue(export.contains("%X Summary with a line break\n"))
         XCTAssertTrue(export.contains("%> /tmp/file.pdf\n"))
+        XCTAssertFalse(export.contains("%9 CREST\n"))
     }
 
     func testScrapeFolderUsesSearchAndTimestamp() throws {

@@ -23,7 +23,6 @@ enum ExportService {
     ]
 
     static func endNoteTSV(items: [Item]) -> String {
-        // The *CIA reference-type marker belongs in the exported filename.
         tsv(items: items)
     }
 
@@ -33,21 +32,17 @@ enum ExportService {
     /// built-in "EndNote Import" filter, avoiding a manual TSV import setup.
     static func endNoteImport(items: [Item]) -> String {
         items.map { item in
+            // The receiving EndNote installation defines a custom reference
+            // type named "CIA" with these standard tagged fields enabled.
             var fields = ["%0 CIA", "%T \(tagValue(item.title))"]
-            appendTagged("%9", value: item.documentType, to: &fields)
-            appendNote("Collection", value: item.collection, to: &fields)
-            appendNote("Document Number (FOIA) / ESDN (CREST)", value: item.documentNumber, to: &fields)
-            appendNote("Release Decision", value: item.releaseDecision, to: &fields)
-            appendNote("Original Classification", value: item.originalClassification, to: &fields)
+            appendNotes(for: item, to: &fields)
             if item.pageCount > 0 { fields.append("%P \(item.pageCount)") }
-            appendNote("Document Creation Date", value: item.documentCreationDate, to: &fields)
-            appendNote("Document Release Date", value: item.documentReleaseDate, to: &fields)
-            appendNote("Sequence Number", value: item.sequenceNumber, to: &fields)
             appendTagged("%8", value: item.publicationDate, to: &fields)
-            appendNote("Content Type", value: item.contentType, to: &fields)
-            appendNote("Case Number", value: item.caseNumber, to: &fields)
-            appendTagged("%U", value: item.recordURL, to: &fields)
+            // EndNote opens the first URL as the record's primary link. CIA's
+            // metadata pages sometimes redirect to the Reading Room homepage,
+            // so prefer the stable direct PDF while retaining the record page.
             for url in item.pdfURLs { appendTagged("%U", value: url, to: &fields) }
+            appendTagged("%U", value: item.recordURL, to: &fields)
             appendTagged("%X", value: item.body, to: &fields)
             for path in item.localPDFPaths { appendTagged("%>", value: path, to: &fields) }
             return fields.joined(separator: "\n")
@@ -92,8 +87,23 @@ enum ExportService {
         if !value.isEmpty { fields.append("\(tag) \(value)") }
     }
 
-    private static func appendNote(_ label: String, value: String, to fields: inout [String]) {
-        let value = tagValue(value)
-        if !value.isEmpty { fields.append("%Z \(label): \(value)") }
+    private static func appendNotes(for item: Item, to fields: inout [String]) {
+        let values = [
+            ("Document Type", item.documentType),
+            ("Collection", item.collection),
+            ("Document Number (FOIA) / ESDN (CREST)", item.documentNumber),
+            ("Release Decision", item.releaseDecision),
+            ("Original Classification", item.originalClassification),
+            ("Document Creation Date", item.documentCreationDate),
+            ("Document Release Date", item.documentReleaseDate),
+            ("Sequence Number", item.sequenceNumber),
+            ("Content Type", item.contentType),
+            ("Case Number", item.caseNumber)
+        ]
+        let notes = values.compactMap { label, rawValue -> String? in
+            let value = tagValue(rawValue)
+            return value.isEmpty ? nil : "\(label): \(value)"
+        }.joined(separator: " | ")
+        appendTagged("%Z", value: notes, to: &fields)
     }
 }
