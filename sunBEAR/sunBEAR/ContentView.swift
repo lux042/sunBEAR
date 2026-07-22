@@ -9,10 +9,11 @@ struct ContentView: View {
     @Query(sort: \ScrapeSession.startedAt, order: .reverse) private var sessions: [ScrapeSession]
     @Query(sort: \LibraryCollection.name) private var collections: [LibraryCollection]
     @State private var scraper = ScrapeService()
+    @State private var selectedSource = ScrapeSource.cia
     @State private var searchURL = "https://www.cia.gov/readingroom/search/site"
     @State private var downloadFolder: URL?
     @State private var choosingFolder = false
-    @State private var showingCIASearch = false
+    @State private var showingSearchBrowser = false
     @State private var shouldDownloadPDFs = true
     @State private var requestedPageCount = 1
     @State private var filter = ""
@@ -76,8 +77,8 @@ struct ContentView: View {
         .fileImporter(isPresented: $choosingFolder, allowedContentTypes: [.folder]) { result in
             if case .success(let url) = result { downloadFolder = url }
         }
-        .sheet(isPresented: $showingCIASearch) {
-            CIASearchBrowser { url in
+        .sheet(isPresented: $showingSearchBrowser) {
+            SearchBrowser(source: selectedSource, initialURL: browserInitialURL) { url in
                 searchURL = url.absoluteString
                 if let folder = downloadFolder {
                     if let session = scraper.start(searchURL: url, destination: folder, shouldDownloadPDFs: shouldDownloadPDFs, pageLimit: requestedPageCount, context: modelContext) {
@@ -282,14 +283,25 @@ struct ContentView: View {
     private var scrapeControls: some View {
         VStack(alignment: .leading, spacing: 14) {
             Text("New scrape").font(.headline)
-            Button { showingCIASearch = true } label: {
-                Label("Open CIA Search", systemImage: "globe")
+            Picker("Source", selection: $selectedSource) {
+                ForEach(ScrapeSource.allCases) { source in Text(source.title).tag(source) }
+            }
+            .pickerStyle(.menu)
+            .onChange(of: selectedSource) { _, source in searchURL = source.defaultSearchURL }
+            Button { showingSearchBrowser = true } label: {
+                Label("Open \(selectedSource.title)", systemImage: "globe")
             }
             .buttonStyle(.borderedProminent)
-            TextField("CIA search-results URL", text: $searchURL, axis: .vertical)
+            TextField(selectedSource.searchURLPrompt, text: $searchURL, axis: .vertical)
                 .textFieldStyle(.roundedBorder)
+                .lineLimit(2...4)
+                .frame(minHeight: 52, alignment: .topLeading)
             Text("Search inside sunBEAR and import the results page, or paste a results URL above.")
                 .font(.caption).foregroundStyle(.secondary)
+            if selectedSource == .jstor {
+                Text("For PDFs, sign in inside sunBEAR, then use Prepare PDF Downloads in that window once. Your Chrome login is separate.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
             Button { choosingFolder = true } label: {
                 Label(downloadFolder?.lastPathComponent ?? "Choose PDF folder", systemImage: "folder")
             }
@@ -297,7 +309,7 @@ struct ContentView: View {
             Toggle("Download PDFs", isOn: $shouldDownloadPDFs)
                 .help("Turn off to collect metadata and abstracts without downloading PDF files")
             Stepper("Search pages: \(requestedPageCount)", value: $requestedPageCount, in: 1...ScrapeService.maximumSearchPages)
-                .help("Choose how many CIA search-result pages to scrape, up to 10")
+                .help("Choose how many search-result pages to scrape, up to 10")
             if scraper.isRunning {
                 ProgressView(value: scraper.total == 0 ? nil : Double(scraper.completed), total: Double(max(scraper.total, 1)))
                 Button("Stop", role: .destructive) { scraper.cancel() }
@@ -307,6 +319,11 @@ struct ContentView: View {
             }
             Text(scraper.status).font(.caption).foregroundStyle(.secondary)
         }
+    }
+
+    private var browserInitialURL: URL? {
+        guard let url = URL(string: searchURL), selectedSource.canImport(url) else { return nil }
+        return url
     }
 
     private var library: some View {
@@ -581,7 +598,7 @@ private struct DocumentDetailView: View {
                     row("Release decision", item.releaseDecision)
                 }
                 Divider()
-                Link("Open CIA record", destination: URL(string: item.recordURL)!)
+                Link("Open \(ScrapeSource.source(for: URL(string: item.recordURL)!)?.title ?? "source") record", destination: URL(string: item.recordURL)!)
                 ForEach(Array(item.localPDFPaths.enumerated()), id: \.offset) { index, path in
                     Link("Open downloaded PDF \(index + 1)", destination: URL(fileURLWithPath: path))
                 }

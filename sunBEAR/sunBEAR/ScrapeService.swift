@@ -15,6 +15,10 @@ final class ScrapeService {
     @discardableResult
     func start(searchURL: URL, destination: URL, shouldDownloadPDFs: Bool, pageLimit: Int, context: ModelContext) -> ScrapeSession? {
         guard !isRunning else { return nil }
+        guard let source = ScrapeSource.source(for: searchURL) else {
+            status = "Choose a CIA FOIA or JSTOR search-results URL."
+            return nil
+        }
         let pageLimit = Self.clampedPageLimit(pageLimit)
         isRunning = true
         completed = 0
@@ -43,12 +47,18 @@ final class ScrapeService {
                     session.pagesScraped = visitedPages.count
                     let page = try await fetchHTML(current)
                     let html = page.html
-                    if current.path.contains("advanced-search"), !page.finalURL.path.contains("advanced-search") {
+                    if source == .cia, current.path.contains("advanced-search"), !page.finalURL.path.contains("advanced-search") {
                         throw ScrapeError.searchRedirected(page.finalURL)
                     }
-                    documentURLs.append(contentsOf: CIAHTMLParser.resultLinks(in: html, baseURL: page.finalURL))
+                    switch source {
+                    case .cia:
+                        documentURLs.append(contentsOf: CIAHTMLParser.resultLinks(in: html, baseURL: page.finalURL))
+                        pageURL = CIAHTMLParser.nextPage(in: html, baseURL: page.finalURL)
+                    case .jstor:
+                        documentURLs.append(contentsOf: JSTORHTMLParser.resultLinks(in: html, baseURL: page.finalURL))
+                        pageURL = JSTORHTMLParser.nextPage(in: html, baseURL: page.finalURL)
+                    }
                     documentURLs = Array(Set(documentURLs)).sorted { $0.absoluteString < $1.absoluteString }
-                    pageURL = CIAHTMLParser.nextPage(in: html, baseURL: page.finalURL)
                     try Task.checkCancellation()
                     try await Task.sleep(for: .milliseconds(350))
                 }
@@ -57,7 +67,11 @@ final class ScrapeService {
                 for (index, url) in documentURLs.enumerated() {
                     status = "Scraping \(index + 1) of \(total)…"
                     let html = try await fetchHTML(url).html
-                    let scraped = CIAHTMLParser.document(from: html, url: url)
+                    let scraped: ScrapedDocument
+                    switch source {
+                    case .cia: scraped = CIAHTMLParser.document(from: html, url: url)
+                    case .jstor: scraped = JSTORHTMLParser.document(from: html, url: url)
+                    }
                     let item = makeItem(scraped)
                     item.session = session
                     context.insert(item)
@@ -98,9 +112,37 @@ final class ScrapeService {
 
     private func downloadPDFs(_ urls: [URL], for item: Item, to folder: URL) async throws -> [String] {
         var paths: [String] = []
+        let cookies = await pageLoader.cookies()
+        // Populate URLSession's cookie jar as well as the initial request. This
+        // keeps the authenticated JSTOR session attached across its redirects.
+        for cookie in cookies { HTTPCookieStorage.shared.setCookie(cookie) }
+        let configuration = URLSessionConfiguration.default
+        configuration.httpCookieStorage = .shared
+        configuration.httpShouldSetCookies = true
+        configuration.httpAdditionalHeaders = [
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Safari/605.1.15",
+            "Accept": "application/pdf,text/html;q=0.8,*/*;q=0.5"
+        ]
+        let downloadSession = URLSession(configuration: configuration)
+        defer { downloadSession.finishTasksAndInvalidate() }
         for (index, url) in urls.enumerated() {
-            let (temporary, response) = try await URLSession.shared.download(from: url)
+            var request = URLRequest(url: url)
+            request.timeoutInterval = 120
+            request.setValue(item.recordURL, forHTTPHeaderField: "Referer")
+            let matchingCookies = cookies.filter { cookie in
+                let host = url.host?.lowercased() ?? ""
+                let domain = cookie.domain.lowercased().trimmingCharacters(in: CharacterSet(charactersIn: "."))
+                return host == domain || host.hasSuffix(".\(domain)")
+            }
+            if let cookieHeader = HTTPCookie.requestHeaderFields(with: matchingCookies)["Cookie"] {
+                request.setValue(cookieHeader, forHTTPHeaderField: "Cookie")
+            }
+            let (temporary, response) = try await downloadSession.download(for: request)
             guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else { throw URLError(.badServerResponse) }
+            let signature = try Data(contentsOf: temporary, options: [.mappedIfSafe]).prefix(5)
+            guard String(decoding: signature, as: UTF8.self) == "%PDF-" else {
+                throw ScrapeError.notPDF(requested: url, returned: http.url, contentType: http.value(forHTTPHeaderField: "Content-Type"))
+            }
             let original = url.lastPathComponent.removingPercentEncoding ?? "document-\(index + 1).pdf"
             let filename = original.lowercased().hasSuffix(".pdf") ? original : "\(original).pdf"
             let fallback = item.documentNumber.isEmpty ? "document-\(index + 1).pdf" : "\(item.documentNumber)-\(index + 1).pdf"
@@ -145,7 +187,16 @@ enum ScrapeFolderNaming {
         let values = preferredKeys.compactMap { key in
             query.first(where: { $0.name == key })?.value?.trimmingCharacters(in: .whitespacesAndNewlines)
         }.filter { !$0.isEmpty }
-        let searchName = values.isEmpty ? "CIA Search" : values.joined(separator: " - ")
+        let source = ScrapeSource.source(for: url)
+        let jstorQuery = query.first(where: { $0.name.caseInsensitiveCompare("Query") == .orderedSame })?.value?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let searchName: String
+        if let jstorQuery, !jstorQuery.isEmpty {
+            searchName = "JSTOR - \(jstorQuery)"
+        } else if !values.isEmpty {
+            searchName = values.joined(separator: " - ")
+        } else {
+            searchName = "\(source?.title ?? "Web") Search"
+        }
 
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "en_US_POSIX")
@@ -162,11 +213,16 @@ enum ScrapeFolderNaming {
 
 private enum ScrapeError: LocalizedError {
     case searchRedirected(URL)
+    case notPDF(requested: URL, returned: URL?, contentType: String?)
 
     var errorDescription: String? {
         switch self {
         case .searchRedirected(let url):
-            "CIA redirected the advanced search to \(url.absoluteString). Open the search in Safari once, then retry."
+            return "CIA redirected the advanced search to \(url.absoluteString). Open the search in Safari once, then retry."
+        case .notPDF(let requested, let returned, let contentType):
+            let response = returned?.absoluteString ?? requested.absoluteString
+            let type = contentType.map { " (\($0))" } ?? ""
+            return "JSTOR returned a webpage instead of a PDF at \(response)\(type). Sign in through the JSTOR window inside sunBear—not Chrome—and click Download on one article there once if JSTOR asks you to accept its download terms."
         }
     }
 }

@@ -33,6 +33,55 @@ final class sunBEARTests: XCTestCase {
         )
     }
 
+    func testJSTORResultLinksAndPagination() throws {
+        let base = try XCTUnwrap(URL(string: "https://www.jstor.org/action/doBasicSearch?Query=climate"))
+        let html = """
+        <search-results-vue-pharos-link data-qa="search-result-title-link" data-itemtype="Research Report"
+          href="/stable/resrep16372?searchText=climate">Climate Change</search-results-vue-pharos-link>
+        <a href="https://www.jstor.org/stable/10.2307/1234">Second result</a>
+        <a rel="next" href="?Query=climate&amp;pagemark=eyJwYWdlIjoyfQ%3D%3D">Next</a>
+        """
+
+        XCTAssertEqual(JSTORHTMLParser.resultLinks(in: html, baseURL: base).map(\.absoluteString), [
+            "https://www.jstor.org/stable/resrep16372",
+            "https://www.jstor.org/stable/10.2307/1234"
+        ])
+        XCTAssertEqual(
+            JSTORHTMLParser.nextPage(in: html, baseURL: base)?.absoluteString,
+            "https://www.jstor.org/action/doBasicSearch?Query=climate&pagemark=eyJwYWdlIjoyfQ%3D%3D"
+        )
+    }
+
+    func testJSTORDocumentMetadata() throws {
+        let url = try XCTUnwrap(URL(string: "https://www.jstor.org/stable/resrep16372"))
+        let html = """
+        <meta name="citation_title" content="Climate &amp; Society">
+        <meta name="citation_type" content="research report">
+        <meta name="citation_publisher" content="Example Institute">
+        <meta name="citation_publication_date" content="2012/03/21">
+        <meta name="description" content="&lt;p&gt;An article abstract.&lt;/p&gt;">
+        <link rel="alternate" href="/stable/pdf/resrep16372.pdf">
+        """
+
+        let document = JSTORHTMLParser.document(from: html, url: url)
+        XCTAssertEqual(document.title, "Climate & Society")
+        XCTAssertEqual(document.fields["Document Type"], "research report")
+        XCTAssertEqual(document.fields["Collection"], "Example Institute")
+        XCTAssertEqual(document.fields["Document Number (FOIA) /ESDN (CREST)"], "resrep16372")
+        XCTAssertEqual(document.fields["Publication Date"], "2012/03/21")
+        XCTAssertEqual(document.body, "An article abstract.")
+        XCTAssertEqual(document.pdfURLs.first?.absoluteString, "https://www.jstor.org/stable/pdf/resrep16372.pdf")
+    }
+
+    func testJSTORGeneratesAuthenticatedPDFURLWhenPageDoesNotExposeOne() throws {
+        let url = try XCTUnwrap(URL(string: "https://www.jstor.org/stable/44214824"))
+        let html = "<meta name=\"citation_title\" content=\"Cuba and the U.S.\">"
+
+        let document = JSTORHTMLParser.document(from: html, url: url)
+
+        XCTAssertEqual(document.pdfURLs.map(\.absoluteString), ["https://www.jstor.org/stable/pdf/44214824.pdf"])
+    }
+
     func testDocumentMetadataAndAllPDFs() throws {
         let url = try XCTUnwrap(URL(string: "https://www.cia.gov/readingroom/document/test"))
         let html = """
@@ -180,6 +229,12 @@ final class sunBEARTests: XCTestCase {
         let url = try XCTUnwrap(URL(string: "https://www.cia.gov/readingroom/advanced-search-view?keyword=Cuba"))
         let date = try XCTUnwrap(Calendar(identifier: .gregorian).date(from: DateComponents(timeZone: TimeZone(secondsFromGMT: 0), year: 2026, month: 7, day: 21, hour: 14, minute: 37, second: 2)))
         XCTAssertEqual(ScrapeFolderNaming.folderName(for: url, date: date), "Cuba - 2026-07-21 09-37-02")
+    }
+
+    func testJSTORScrapeFolderUsesSearchAndTimestamp() throws {
+        let url = try XCTUnwrap(URL(string: "https://www.jstor.org/action/doBasicSearch?Query=climate%20change"))
+        let date = try XCTUnwrap(Calendar(identifier: .gregorian).date(from: DateComponents(timeZone: TimeZone(secondsFromGMT: 0), year: 2026, month: 7, day: 21, hour: 14, minute: 37, second: 2)))
+        XCTAssertEqual(ScrapeFolderNaming.folderName(for: url, date: date), "JSTOR - climate change - 2026-07-21 09-37-02")
     }
 
     @MainActor

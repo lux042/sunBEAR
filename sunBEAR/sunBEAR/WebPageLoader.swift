@@ -1,9 +1,8 @@
 import Foundation
 import WebKit
 
-/// Loads CIA pages through WebKit because the Reading Room redirects non-browser
-/// HTTP clients away from advanced-search results. The same session is retained
-/// for pagination and document pages so cookies are preserved.
+/// Loads source pages through WebKit so JavaScript-rendered search results and
+/// the user's CIA/JSTOR session cookies remain available to the scraper.
 @MainActor
 final class WebPageLoader: NSObject, WKNavigationDelegate {
     private let webView: WKWebView
@@ -33,8 +32,16 @@ final class WebPageLoader: NSObject, WKNavigationDelegate {
         }
     }
 
+    func cookies() async -> [HTTPCookie] {
+        await withCheckedContinuation { continuation in
+            webView.configuration.websiteDataStore.httpCookieStore.getAllCookies {
+                continuation.resume(returning: $0)
+            }
+        }
+    }
+
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-        // CIA result rows can be populated shortly after the navigation finishes.
+        // Both sources populate portions of their result pages after navigation.
         Task {
             try? await Task.sleep(for: .milliseconds(750))
             do {
@@ -63,8 +70,8 @@ final class WebPageLoader: NSObject, WKNavigationDelegate {
 
         var errorDescription: String? {
             switch self {
-            case .alreadyLoading: "A CIA page is already loading."
-            case .noHTML: "The CIA page loaded without readable HTML."
+            case .alreadyLoading: "A source page is already loading."
+            case .noHTML: "The source page loaded without readable HTML."
             }
         }
     }
