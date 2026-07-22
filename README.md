@@ -18,6 +18,16 @@ PDFs, and exporting records in an EndNote-compatible tab-delimited format.
 - Preservation-focused metadata export
 - Pausable and resumable scraping jobs
 
+
+now supported sources:
+
+CIA FOIA Electronic Reading Room
+JSTOR
+ERIC
+PubMed
+National Archives Catalog
+
+
 ## Platform
 
 - macOS
