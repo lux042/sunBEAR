@@ -82,6 +82,53 @@ final class sunBEARTests: XCTestCase {
         XCTAssertEqual(document.pdfURLs.map(\.absoluteString), ["https://www.jstor.org/stable/pdf/44214824.pdf"])
     }
 
+    func testERICResultLinksAndPagination() throws {
+        let base = try XCTUnwrap(URL(string: "https://eric.ed.gov/?q=english"))
+        let html = """
+        <div class="r_i" id="r_EJ1458636"><div class="r_t">
+          <a href="?q=english&amp;id=EJ1458636">First result</a>
+        </div></div>
+        <a href="?id=ED636970&amp;q=english">Second result</a>
+        <a href="?q=english&amp;pg=2">Next Page »</a>
+        """
+
+        XCTAssertEqual(ERICHTMLParser.resultLinks(in: html, baseURL: base).map(\.absoluteString), [
+            "https://eric.ed.gov/?id=EJ1458636",
+            "https://eric.ed.gov/?id=ED636970"
+        ])
+        XCTAssertEqual(ERICHTMLParser.nextPage(in: html, baseURL: base)?.absoluteString, "https://eric.ed.gov/?q=english&pg=2")
+    }
+
+    func testERICDocumentMetadataAndHostedPDF() throws {
+        let url = try XCTUnwrap(URL(string: "https://eric.ed.gov/?id=EJ1458636"))
+        let html = """
+        <meta name="citation_title" content="A Practitioner&apos;s Conceptualization of Student Engagement." />
+        <meta name="citation_abstract" content="A concise study abstract." />
+        <meta name="citation_journal_title" content="Advocate" />
+        <meta name="citation_publication_date" content="2024/00/00" />
+        <meta name="citation_pdf_url" content="http://files.eric.ed.gov/fulltext/EJ1458636.pdf" />
+        <div><strong>ERIC Number:</strong> EJ1458636</div>
+        <div><strong>Record Type:</strong> Journal</div>
+        <div><strong>Pages:</strong> 11</div>
+        """
+
+        let document = ERICHTMLParser.document(from: html, url: url)
+        XCTAssertEqual(document.title, "A Practitioner's Conceptualization of Student Engagement")
+        XCTAssertEqual(document.fields["Document Type"], "Journal")
+        XCTAssertEqual(document.fields["Collection"], "Advocate")
+        XCTAssertEqual(document.fields["Document Number (FOIA) /ESDN (CREST)"], "EJ1458636")
+        XCTAssertEqual(document.fields["Document Page Count"], "11")
+        XCTAssertEqual(document.fields["Publication Date"], "2024/00/00")
+        XCTAssertEqual(document.body, "A concise study abstract.")
+        XCTAssertEqual(document.pdfURLs.map(\.absoluteString), ["http://files.eric.ed.gov/fulltext/EJ1458636.pdf"])
+    }
+
+    func testERICScrapeFolderUsesSearchAndTimestamp() throws {
+        let url = try XCTUnwrap(URL(string: "https://eric.ed.gov/?q=english"))
+        let date = try XCTUnwrap(Calendar(identifier: .gregorian).date(from: DateComponents(timeZone: TimeZone(secondsFromGMT: 0), year: 2026, month: 7, day: 21, hour: 14, minute: 37, second: 2)))
+        XCTAssertEqual(ScrapeFolderNaming.folderName(for: url, date: date), "ERIC - english - 2026-07-21 09-37-02")
+    }
+
     func testDocumentMetadataAndAllPDFs() throws {
         let url = try XCTUnwrap(URL(string: "https://www.cia.gov/readingroom/document/test"))
         let html = """

@@ -16,7 +16,7 @@ final class ScrapeService {
     func start(searchURL: URL, destination: URL, shouldDownloadPDFs: Bool, pageLimit: Int, context: ModelContext) -> ScrapeSession? {
         guard !isRunning else { return nil }
         guard let source = ScrapeSource.source(for: searchURL) else {
-            status = "Choose a CIA FOIA or JSTOR search-results URL."
+            status = "Choose a CIA FOIA, JSTOR, or ERIC search-results URL."
             return nil
         }
         let pageLimit = Self.clampedPageLimit(pageLimit)
@@ -57,6 +57,9 @@ final class ScrapeService {
                     case .jstor:
                         documentURLs.append(contentsOf: JSTORHTMLParser.resultLinks(in: html, baseURL: page.finalURL))
                         pageURL = JSTORHTMLParser.nextPage(in: html, baseURL: page.finalURL)
+                    case .eric:
+                        documentURLs.append(contentsOf: ERICHTMLParser.resultLinks(in: html, baseURL: page.finalURL))
+                        pageURL = ERICHTMLParser.nextPage(in: html, baseURL: page.finalURL)
                     }
                     documentURLs = Array(Set(documentURLs)).sorted { $0.absoluteString < $1.absoluteString }
                     try Task.checkCancellation()
@@ -71,6 +74,7 @@ final class ScrapeService {
                     switch source {
                     case .cia: scraped = CIAHTMLParser.document(from: html, url: url)
                     case .jstor: scraped = JSTORHTMLParser.document(from: html, url: url)
+                    case .eric: scraped = ERICHTMLParser.document(from: html, url: url)
                     }
                     let item = makeItem(scraped)
                     item.session = session
@@ -192,6 +196,10 @@ enum ScrapeFolderNaming {
         let searchName: String
         if let jstorQuery, !jstorQuery.isEmpty {
             searchName = "JSTOR - \(jstorQuery)"
+        } else if source == .eric,
+                  let ericQuery = query.first(where: { $0.name.caseInsensitiveCompare("q") == .orderedSame })?.value?.trimmingCharacters(in: .whitespacesAndNewlines),
+                  !ericQuery.isEmpty {
+            searchName = "ERIC - \(ericQuery)"
         } else if !values.isEmpty {
             searchName = values.joined(separator: " - ")
         } else {
