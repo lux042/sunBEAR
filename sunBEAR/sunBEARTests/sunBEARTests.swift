@@ -136,6 +136,46 @@ final class sunBEARTests: XCTestCase {
         XCTAssertFalse(export.contains("%9 CREST\n"))
     }
 
+    @MainActor
+    func testDirectEndNoteXMLUsesCIATypeAndMappedFields() {
+        let item = Item(
+            title: "A & B", documentType: "CREST", collection: "General CIA Records",
+            documentNumber: "CIA-RDP-1", releaseDecision: "RIPPUB", originalClassification: "K",
+            pageCount: 3, documentCreationDate: "December 14, 2016",
+            documentReleaseDate: "September 27, 2002", sequenceNumber: "9",
+            publicationDate: "June 1, 1960", contentType: "MF", caseNumber: "CASE-1",
+            recordURL: "https://example.com/record?a=1&b=2",
+            pdfURLs: ["https://example.com/file.pdf"], body: "Summary <body>"
+        )
+        let export = ExportService.endNoteXML(items: [item])
+
+        XCTAssertTrue(export.contains("<ref-type name=\"CIA\">40</ref-type>"))
+        XCTAssertTrue(export.contains("A &amp; B"))
+        XCTAssertTrue(export.contains("<pages>"))
+        XCTAssertTrue(export.contains("June 1, 1960"))
+        XCTAssertTrue(export.contains("<notes>"))
+        XCTAssertTrue(export.contains("Document Type: CREST"))
+        XCTAssertTrue(export.contains("Case Number: CASE-1"))
+        XCTAssertTrue(export.contains("https://example.com/file.pdf"))
+        XCTAssertTrue(export.contains("https://example.com/record?a=1&amp;b=2"))
+        XCTAssertTrue(export.contains("Summary &lt;body&gt;"))
+    }
+
+    @MainActor
+    func testDirectEndNoteXMLRemovesIllegalPDFControlCharacters() {
+        let item = Item(
+            title: "Control character test", pageCount: 1,
+            recordURL: "https://example.com/record",
+            body: "Page one\u{000C}Page two\u{0008}done"
+        )
+
+        let export = ExportService.endNoteXML(items: [item])
+
+        XCTAssertFalse(export.contains("\u{000C}"))
+        XCTAssertFalse(export.contains("\u{0008}"))
+        XCTAssertTrue(export.contains("Page onePage twodone"))
+    }
+
     func testScrapeFolderUsesSearchAndTimestamp() throws {
         let url = try XCTUnwrap(URL(string: "https://www.cia.gov/readingroom/advanced-search-view?keyword=Cuba"))
         let date = try XCTUnwrap(Calendar(identifier: .gregorian).date(from: DateComponents(timeZone: TimeZone(secondsFromGMT: 0), year: 2026, month: 7, day: 21, hour: 14, minute: 37, second: 2)))

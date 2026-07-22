@@ -28,6 +28,31 @@ enum ExportService {
 
     static func preservationTSV(items: [Item]) -> String { tsv(items: items) }
 
+    /// EndNote's AppleScript interface accepts RSXML directly. This avoids the
+    /// automatic `.enw` importer, which cannot select a user's custom filter.
+    static func endNoteXML(items: [Item]) -> String {
+        let records = items.map { item in
+            let relatedURLs = (item.pdfURLs + [item.recordURL]).filter { !$0.isEmpty }.map {
+                "<url>\(xmlStyle($0))</url>"
+            }.joined()
+            let attachments = item.localPDFPaths.filter { !$0.isEmpty }.map {
+                "<url>\(xml(URL(fileURLWithPath: $0).absoluteString))</url>"
+            }.joined()
+            return """
+            <record>
+            <ref-type name="CIA">40</ref-type>
+            <titles><title>\(xmlStyle(item.title))</title></titles>
+            \(item.pageCount > 0 ? "<pages>\(xmlStyle(String(item.pageCount)))</pages>" : "")
+            \(item.publicationDate.isEmpty ? "" : "<dates><pub-dates><date>\(xmlStyle(item.publicationDate))</date></pub-dates></dates>")
+            \(item.body.isEmpty ? "" : "<abstract>\(xmlStyle(item.body))</abstract>")
+            \(notesValue(for: item).isEmpty ? "" : "<notes>\(xmlStyle(notesValue(for: item)))</notes>")
+            \(relatedURLs.isEmpty ? "" : "<urls><related-urls>\(relatedURLs)</related-urls>\(attachments.isEmpty ? "" : "<pdf-urls>\(attachments)</pdf-urls>")</urls>")
+            </record>
+            """
+        }.joined()
+        return "<?xml version=\"1.0\" encoding=\"UTF-8\" ?><xml><records>\(records)</records></xml>"
+    }
+
     /// EndNote's tagged import format. Opening this file in EndNote invokes its
     /// built-in "EndNote Import" filter, avoiding a manual TSV import setup.
     static func endNoteImport(items: [Item]) -> String {
@@ -88,6 +113,10 @@ enum ExportService {
     }
 
     private static func appendNotes(for item: Item, to fields: inout [String]) {
+        appendTagged("%Z", value: notesValue(for: item), to: &fields)
+    }
+
+    private static func notesValue(for item: Item) -> String {
         let values = [
             ("Document Type", item.documentType),
             ("Collection", item.collection),
@@ -104,6 +133,28 @@ enum ExportService {
             let value = tagValue(rawValue)
             return value.isEmpty ? nil : "\(label): \(value)"
         }.joined(separator: " | ")
-        appendTagged("%Z", value: notes, to: &fields)
+        return notes
+    }
+
+    private static func xmlStyle(_ value: String) -> String {
+        "<style face=\"normal\" font=\"default\" size=\"100%\">\(xml(value))</style>"
+    }
+
+    private static func xml(_ value: String) -> String {
+        // OCR extracted from PDFs can contain form feeds and other C0 control
+        // characters. XML 1.0 rejects them, which can make EndNote silently
+        // create a reference containing only the fields before the bad byte.
+        let validXML = String(value.unicodeScalars.filter { scalar in
+            let code = scalar.value
+            return code == 0x09 || code == 0x0A || code == 0x0D ||
+                (0x20...0xD7FF).contains(code) ||
+                (0xE000...0xFFFD).contains(code) ||
+                (0x10000...0x10FFFF).contains(code)
+        })
+        return validXML.replacingOccurrences(of: "&", with: "&amp;")
+            .replacingOccurrences(of: "<", with: "&lt;")
+            .replacingOccurrences(of: ">", with: "&gt;")
+            .replacingOccurrences(of: "\"", with: "&quot;")
+            .replacingOccurrences(of: "'", with: "&apos;")
     }
 }
