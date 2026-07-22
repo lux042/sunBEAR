@@ -16,7 +16,7 @@ final class ScrapeService {
     func start(searchURL: URL, destination: URL, shouldDownloadPDFs: Bool, pageLimit: Int, context: ModelContext) -> ScrapeSession? {
         guard !isRunning else { return nil }
         guard let source = ScrapeSource.source(for: searchURL) else {
-            status = "Choose a CIA FOIA, JSTOR, or ERIC search-results URL."
+            status = "Choose a CIA FOIA, JSTOR, ERIC, or PubMed search-results URL."
             return nil
         }
         let pageLimit = Self.clampedPageLimit(pageLimit)
@@ -60,6 +60,9 @@ final class ScrapeService {
                     case .eric:
                         documentURLs.append(contentsOf: ERICHTMLParser.resultLinks(in: html, baseURL: page.finalURL))
                         pageURL = ERICHTMLParser.nextPage(in: html, baseURL: page.finalURL)
+                    case .pubmed:
+                        documentURLs.append(contentsOf: PubMedHTMLParser.resultLinks(in: html, baseURL: page.finalURL))
+                        pageURL = PubMedHTMLParser.nextPage(in: html, baseURL: page.finalURL)
                     }
                     documentURLs = Array(Set(documentURLs)).sorted { $0.absoluteString < $1.absoluteString }
                     try Task.checkCancellation()
@@ -75,6 +78,14 @@ final class ScrapeService {
                     case .cia: scraped = CIAHTMLParser.document(from: html, url: url)
                     case .jstor: scraped = JSTORHTMLParser.document(from: html, url: url)
                     case .eric: scraped = ERICHTMLParser.document(from: html, url: url)
+                    case .pubmed:
+                        var document = PubMedHTMLParser.document(from: html, url: url)
+                        if let pmcURL = PubMedHTMLParser.pmcArticleURL(in: html, baseURL: url),
+                           let pmcPage = try? await fetchHTML(pmcURL) {
+                            document.pdfURLs.append(contentsOf: PubMedHTMLParser.pdfURLs(in: pmcPage.html, baseURL: pmcPage.finalURL))
+                            document.pdfURLs = Array(Set(document.pdfURLs)).sorted { $0.absoluteString < $1.absoluteString }
+                        }
+                        scraped = document
                     }
                     let item = makeItem(scraped)
                     item.session = session
@@ -200,6 +211,12 @@ enum ScrapeFolderNaming {
                   let ericQuery = query.first(where: { $0.name.caseInsensitiveCompare("q") == .orderedSame })?.value?.trimmingCharacters(in: .whitespacesAndNewlines),
                   !ericQuery.isEmpty {
             searchName = "ERIC - \(ericQuery)"
+        } else if source == .pubmed,
+                  let pubmedQuery = query.first(where: { $0.name.caseInsensitiveCompare("term") == .orderedSame })?.value.map({
+                      $0.replacingOccurrences(of: "+", with: " ").trimmingCharacters(in: .whitespacesAndNewlines)
+                  }),
+                  !pubmedQuery.isEmpty {
+            searchName = "PubMed - \(pubmedQuery)"
         } else if !values.isEmpty {
             searchName = values.joined(separator: " - ")
         } else {
@@ -230,7 +247,13 @@ private enum ScrapeError: LocalizedError {
         case .notPDF(let requested, let returned, let contentType):
             let response = returned?.absoluteString ?? requested.absoluteString
             let type = contentType.map { " (\($0))" } ?? ""
-            return "JSTOR returned a webpage instead of a PDF at \(response)\(type). Sign in through the JSTOR window inside sunBear—not Chrome—and click Download on one article there once if JSTOR asks you to accept its download terms."
+            if requested.host?.lowercased().hasSuffix("jstor.org") == true {
+                return "JSTOR returned a webpage instead of a PDF at \(response)\(type). Sign in through the JSTOR window inside sunBear—not Chrome—and click Download on one article there once if JSTOR asks you to accept its download terms."
+            }
+            if requested.host?.lowercased() == "pmc.ncbi.nlm.nih.gov" {
+                return "PMC returned its Preparing to download webpage instead of the PDF at \(response)\(type). Open PubMed inside sunBEAR and use Prepare PDF Downloads once, wait for the PDF to appear, then retry the scrape."
+            }
+            return "The source returned a webpage instead of a PDF at \(response)\(type), so sunBEAR did not save it as a PDF."
         }
     }
 }

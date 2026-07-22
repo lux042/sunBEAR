@@ -129,6 +129,61 @@ final class sunBEARTests: XCTestCase {
         XCTAssertEqual(ScrapeFolderNaming.folderName(for: url, date: date), "ERIC - english - 2026-07-21 09-37-02")
     }
 
+    func testPubMedResultLinksAndPagination() throws {
+        let base = try XCTUnwrap(URL(string: "https://pubmed.ncbi.nlm.nih.gov/?term=education"))
+        let html = """
+        <a class="docsum-title" href="/31235301/">First record</a>
+        <a class="docsum-title highlighted" href="/41657923/">Second record</a>
+        <button class="button-wrapper next-page-btn">Next</button>
+        """
+
+        XCTAssertEqual(PubMedHTMLParser.resultLinks(in: html, baseURL: base).map(\.absoluteString), [
+            "https://pubmed.ncbi.nlm.nih.gov/31235301/",
+            "https://pubmed.ncbi.nlm.nih.gov/41657923/"
+        ])
+        XCTAssertEqual(PubMedHTMLParser.nextPage(in: html, baseURL: base)?.absoluteString, "https://pubmed.ncbi.nlm.nih.gov/?term=education&page=2")
+    }
+
+    func testPubMedMetadataAndPMCDiscovery() throws {
+        let url = try XCTUnwrap(URL(string: "https://pubmed.ncbi.nlm.nih.gov/41657923/"))
+        let html = """
+        <meta name="citation_title" content="What is medical education research?">
+        <meta name="citation_date" content="01/15/2026">
+        <meta name="citation_journal_title" content="GMS journal for medical education">
+        <meta name="citation_pmid" content="41657923">
+        <span class="publication-type">Research Article</span>
+        <div class="abstract-content selected"><p>A useful <b>medical education</b> abstract.</p></div>
+        <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC12875206/">PMC</a>
+        """
+
+        let document = PubMedHTMLParser.document(from: html, url: url)
+        XCTAssertEqual(document.title, "What is medical education research?")
+        XCTAssertEqual(document.fields["Document Type"], "Research Article")
+        XCTAssertEqual(document.fields["Collection"], "GMS journal for medical education")
+        XCTAssertEqual(document.fields["Document Number (FOIA) /ESDN (CREST)"], "41657923")
+        XCTAssertEqual(document.fields["Publication Date"], "01/15/2026")
+        XCTAssertEqual(document.body, "A useful medical education abstract.")
+        XCTAssertTrue(document.pdfURLs.isEmpty)
+        XCTAssertEqual(PubMedHTMLParser.pmcArticleURL(in: html, baseURL: url)?.absoluteString, "https://pmc.ncbi.nlm.nih.gov/articles/PMC12875206/")
+    }
+
+    func testPubMedExtractsOnlyPMCHostedPDFs() throws {
+        let base = try XCTUnwrap(URL(string: "https://pmc.ncbi.nlm.nih.gov/articles/PMC12875206/"))
+        let html = """
+        <meta name="citation_pdf_url" content="https://pmc.ncbi.nlm.nih.gov/articles/PMC12875206/pdf/JME-43-12.pdf">
+        <a href="https://publisher.example/article.pdf">Publisher PDF</a>
+        """
+        XCTAssertEqual(PubMedHTMLParser.pdfURLs(in: html, baseURL: base).map(\.absoluteString), [
+            "https://pmc.ncbi.nlm.nih.gov/articles/PMC12875206/pdf/JME-43-12.pdf"
+        ])
+    }
+
+    func testPubMedScrapeFolderUsesSearchAndTimestamp() throws {
+        let url = try XCTUnwrap(URL(string: "https://pubmed.ncbi.nlm.nih.gov/?term=medical+education"))
+        let date = try XCTUnwrap(Calendar(identifier: .gregorian).date(from: DateComponents(timeZone: TimeZone(secondsFromGMT: 0), year: 2026, month: 7, day: 21, hour: 14, minute: 37, second: 2)))
+        XCTAssertEqual(ScrapeFolderNaming.folderName(for: url, date: date), "PubMed - medical education - 2026-07-21 09-37-02")
+    }
+
     func testDocumentMetadataAndAllPDFs() throws {
         let url = try XCTUnwrap(URL(string: "https://www.cia.gov/readingroom/document/test"))
         let html = """

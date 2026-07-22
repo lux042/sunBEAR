@@ -29,9 +29,11 @@ struct SearchBrowser: View {
                 Text(currentURL?.absoluteString ?? source.title)
                     .lineLimit(1).truncationMode(.middle).foregroundStyle(.secondary)
                 Spacer()
-                if source == .jstor {
-                    Button("Prepare PDF Downloads") { prepareJSTORPDFDownload() }
-                        .help("Open a JSTOR PDF in this window so you can accept JSTOR's download terms once")
+                if source == .jstor || source == .pubmed {
+                    Button("Prepare PDF Downloads") { preparePDFDownloads() }
+                        .help(source == .jstor
+                              ? "Open a JSTOR PDF in this window so you can accept JSTOR's download terms once"
+                              : "Open a PubMed Central PDF in this window so PMC can prepare the download session")
                 }
                 Button("Cancel") { dismiss() }
                 Button("Import This \(source.title) Search") {
@@ -57,6 +59,14 @@ struct SearchBrowser: View {
         .frame(minWidth: 980, minHeight: 700)
     }
 
+    private func preparePDFDownloads() {
+        switch source {
+        case .jstor: prepareJSTORPDFDownload()
+        case .pubmed: preparePubMedPDFDownload()
+        default: break
+        }
+    }
+
     private func prepareJSTORPDFDownload() {
         browserMessage = "Finding an article to open…"
         let script = #"""
@@ -77,6 +87,31 @@ struct SearchBrowser: View {
                     return
                 }
                 browserMessage = "If JSTOR shows its download terms, review and accept them here. After the PDF appears, go Back and import the search."
+                webView.load(URLRequest(url: pdfURL))
+            }
+        }
+    }
+
+    private func preparePubMedPDFDownload() {
+        browserMessage = "Finding a PubMed Central article to open…"
+        let script = #"""
+        (() => {
+          const metaPDF = document.querySelector('meta[name="citation_pdf_url"]')?.content;
+          if (metaPDF && metaPDF.includes('pmc.ncbi.nlm.nih.gov/')) return metaPDF;
+          const pmcLink = Array.from(document.querySelectorAll('a[href*="pmc.ncbi.nlm.nih.gov/articles/"]'))
+            .map(a => a.href).find(Boolean);
+          if (!pmcLink) return null;
+          const match = new URL(pmcLink).pathname.match(/\/articles\/(PMC\d+|pmid\/\d+)\/?/i);
+          return match ? `https://pmc.ncbi.nlm.nih.gov/articles/${match[1]}/pdf/` : null;
+        })()
+        """#
+        webView.evaluateJavaScript(script) { value, _ in
+            DispatchQueue.main.async {
+                guard let value = value as? String, let pdfURL = URL(string: value) else {
+                    browserMessage = "Open a PubMed record that has a PMC full-text link, then choose Prepare PDF Downloads again."
+                    return
+                }
+                browserMessage = "PMC may briefly show Preparing to download. Wait for the PDF to appear, then go Back and import the search."
                 webView.load(URLRequest(url: pdfURL))
             }
         }

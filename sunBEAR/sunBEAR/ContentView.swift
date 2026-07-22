@@ -301,6 +301,9 @@ struct ContentView: View {
             if selectedSource == .jstor {
                 Text("For PDFs, sign in inside sunBEAR, then use Prepare PDF Downloads in that window once. Your Chrome login is separate.")
                     .font(.caption).foregroundStyle(.secondary)
+            } else if selectedSource == .pubmed {
+                Text("For PMC PDFs, use Prepare PDF Downloads inside the PubMed window once before scraping.")
+                    .font(.caption).foregroundStyle(.secondary)
             }
             Button { choosingFolder = true } label: {
                 Label(downloadFolder?.lastPathComponent ?? "Choose PDF folder", systemImage: "folder")
