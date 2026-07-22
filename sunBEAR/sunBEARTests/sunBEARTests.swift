@@ -184,6 +184,46 @@ final class sunBEARTests: XCTestCase {
         XCTAssertEqual(ScrapeFolderNaming.folderName(for: url, date: date), "PubMed - medical education - 2026-07-21 09-37-02")
     }
 
+    func testNationalArchivesResultLinksAndPagination() throws {
+        let base = try XCTUnwrap(URL(string: "https://catalog.archives.gov/search?page=1&q=constitution"))
+        let html = """
+        <a href="/id/1667751"><h2>Constitution of the United States</h2></a>
+        <a href="/id/513007">Constitution</a>
+        <button aria-label="Go to page 2">Next</button>
+        """
+        XCTAssertEqual(NARAHTMLParser.resultLinks(in: html, baseURL: base).map(\.absoluteString), [
+            "https://catalog.archives.gov/id/1667751",
+            "https://catalog.archives.gov/id/513007"
+        ])
+        XCTAssertEqual(NARAHTMLParser.nextPage(in: html, baseURL: base)?.absoluteString, "https://catalog.archives.gov/search?q=constitution&page=2")
+    }
+
+    func testNationalArchivesMetadataAndPDFs() throws {
+        let url = try XCTUnwrap(URL(string: "https://catalog.archives.gov/id/1667751"))
+        let html = """
+        <main><div>Item</div><h1>Constitution of the United States</h1><div>NAID: 1667751</div>
+        <a href="https://catalog.archives.gov/medialive/archive/00303.pdf">Download the PDF</a>
+        <h2>Dates,</h2><p>September 17, 1787–September 17, 1787.</p>
+        <h2>Record Group 11</h2><div>General Records of the United States Government</div>
+        <h2>Scope and Content</h2><p>The signed parchment copy.</p></main>
+        """
+        let document = NARAHTMLParser.document(from: html, url: url)
+        XCTAssertEqual(document.title, "Constitution of the United States")
+        XCTAssertEqual(document.fields["Document Type"], "Item")
+        XCTAssertEqual(document.fields["Document Number (FOIA) /ESDN (CREST)"], "1667751")
+        XCTAssertEqual(document.fields["Collection"], "General Records of the United States Government")
+        XCTAssertEqual(document.fields["Publication Date"], "September 17, 1787–September 17, 1787.")
+        XCTAssertEqual(document.fields["Content Type"], "National Archives")
+        XCTAssertEqual(document.body, "The signed parchment copy.")
+        XCTAssertEqual(document.pdfURLs.map(\.absoluteString), ["https://catalog.archives.gov/medialive/archive/00303.pdf"])
+    }
+
+    func testNationalArchivesScrapeFolderUsesSearchAndTimestamp() throws {
+        let url = try XCTUnwrap(URL(string: "https://catalog.archives.gov/search?page=1&q=constitution"))
+        let date = try XCTUnwrap(Calendar(identifier: .gregorian).date(from: DateComponents(timeZone: TimeZone(secondsFromGMT: 0), year: 2026, month: 7, day: 21, hour: 14, minute: 37, second: 2)))
+        XCTAssertEqual(ScrapeFolderNaming.folderName(for: url, date: date), "National Archives - constitution - 2026-07-21 09-37-02")
+    }
+
     func testDocumentMetadataAndAllPDFs() throws {
         let url = try XCTUnwrap(URL(string: "https://www.cia.gov/readingroom/document/test"))
         let html = """
@@ -325,6 +365,36 @@ final class sunBEARTests: XCTestCase {
         XCTAssertFalse(export.contains("\u{000C}"))
         XCTAssertFalse(export.contains("\u{0008}"))
         XCTAssertTrue(export.contains("Page onePage twodone"))
+    }
+
+    @MainActor
+    func testJSTORERICAndPubMedUseSourceAwareEndNoteFields() {
+        let jstor = Item(
+            title: "JSTOR article", documentType: "Journal Article", collection: "History Quarterly",
+            documentNumber: "123456", recordURL: "https://www.jstor.org/stable/123456"
+        )
+        let eric = Item(
+            title: "ERIC report", documentType: "Reports - Research", collection: "ERIC",
+            documentNumber: "ED123456", recordURL: "https://eric.ed.gov/?id=ED123456"
+        )
+        let pubmed = Item(
+            title: "PubMed article", documentType: "Review", collection: "Medical Journal",
+            documentNumber: "987654", recordURL: "https://pubmed.ncbi.nlm.nih.gov/987654/"
+        )
+
+        let tagged = ExportService.endNoteImport(items: [jstor, eric, pubmed])
+        XCTAssertEqual(tagged.components(separatedBy: "%0 Journal Article").count - 1, 2)
+        XCTAssertTrue(tagged.contains("%0 Report\n%T ERIC report"))
+        XCTAssertTrue(tagged.contains("%J History Quarterly"))
+        XCTAssertTrue(tagged.contains("%J Medical Journal"))
+        XCTAssertTrue(tagged.contains("JSTOR Stable ID: 123456"))
+        XCTAssertTrue(tagged.contains("ERIC Number: ED123456"))
+        XCTAssertTrue(tagged.contains("PMID: 987654"))
+
+        let xml = ExportService.endNoteXML(items: [jstor, eric, pubmed])
+        XCTAssertEqual(xml.components(separatedBy: "<ref-type name=\"Journal Article\">17</ref-type>").count - 1, 2)
+        XCTAssertTrue(xml.contains("<ref-type name=\"Report\">27</ref-type>"))
+        XCTAssertTrue(xml.contains("<secondary-title><style face=\"normal\" font=\"default\" size=\"100%\">History Quarterly</style></secondary-title>"))
     }
 
     func testScrapeFolderUsesSearchAndTimestamp() throws {

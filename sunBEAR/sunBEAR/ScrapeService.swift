@@ -16,7 +16,7 @@ final class ScrapeService {
     func start(searchURL: URL, destination: URL, shouldDownloadPDFs: Bool, pageLimit: Int, context: ModelContext) -> ScrapeSession? {
         guard !isRunning else { return nil }
         guard let source = ScrapeSource.source(for: searchURL) else {
-            status = "Choose a CIA FOIA, JSTOR, ERIC, or PubMed search-results URL."
+            status = "Choose a supported source's search-results URL."
             return nil
         }
         let pageLimit = Self.clampedPageLimit(pageLimit)
@@ -63,6 +63,9 @@ final class ScrapeService {
                     case .pubmed:
                         documentURLs.append(contentsOf: PubMedHTMLParser.resultLinks(in: html, baseURL: page.finalURL))
                         pageURL = PubMedHTMLParser.nextPage(in: html, baseURL: page.finalURL)
+                    case .nara:
+                        documentURLs.append(contentsOf: NARAHTMLParser.resultLinks(in: html, baseURL: page.finalURL))
+                        pageURL = NARAHTMLParser.nextPage(in: html, baseURL: page.finalURL)
                     }
                     documentURLs = Array(Set(documentURLs)).sorted { $0.absoluteString < $1.absoluteString }
                     try Task.checkCancellation()
@@ -86,6 +89,7 @@ final class ScrapeService {
                             document.pdfURLs = Array(Set(document.pdfURLs)).sorted { $0.absoluteString < $1.absoluteString }
                         }
                         scraped = document
+                    case .nara: scraped = NARAHTMLParser.document(from: html, url: url)
                     }
                     let item = makeItem(scraped)
                     item.session = session
@@ -217,6 +221,10 @@ enum ScrapeFolderNaming {
                   }),
                   !pubmedQuery.isEmpty {
             searchName = "PubMed - \(pubmedQuery)"
+        } else if source == .nara,
+                  let naraQuery = query.first(where: { $0.name.caseInsensitiveCompare("q") == .orderedSame })?.value?.trimmingCharacters(in: .whitespacesAndNewlines),
+                  !naraQuery.isEmpty {
+            searchName = "National Archives - \(naraQuery)"
         } else if !values.isEmpty {
             searchName = values.joined(separator: " - ")
         } else {

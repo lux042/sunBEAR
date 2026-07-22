@@ -5,6 +5,7 @@ enum ScrapeSource: String, CaseIterable, Identifiable {
     case jstor
     case eric
     case pubmed
+    case nara
 
     var id: Self { self }
 
@@ -14,6 +15,7 @@ enum ScrapeSource: String, CaseIterable, Identifiable {
         case .jstor: "JSTOR"
         case .eric: "ERIC"
         case .pubmed: "PubMed"
+        case .nara: "National Archives"
         }
     }
 
@@ -23,6 +25,7 @@ enum ScrapeSource: String, CaseIterable, Identifiable {
         case .jstor: URL(string: "https://www.jstor.org/")!
         case .eric: URL(string: "https://eric.ed.gov/")!
         case .pubmed: URL(string: "https://pubmed.ncbi.nlm.nih.gov/")!
+        case .nara: URL(string: "https://catalog.archives.gov/")!
         }
     }
 
@@ -32,6 +35,7 @@ enum ScrapeSource: String, CaseIterable, Identifiable {
         case .jstor: "https://www.jstor.org/action/doBasicSearch"
         case .eric: "https://eric.ed.gov/"
         case .pubmed: "https://pubmed.ncbi.nlm.nih.gov/"
+        case .nara: "https://catalog.archives.gov/search?page=1&q="
         }
     }
 
@@ -48,6 +52,9 @@ enum ScrapeSource: String, CaseIterable, Identifiable {
         case .pubmed:
             let query = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems ?? []
             return query.contains { $0.name == "term" }
+        case .nara:
+            let query = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems ?? []
+            return url.path == "/search" && query.contains { $0.name == "q" && !($0.value ?? "").isEmpty }
         }
     }
 
@@ -61,6 +68,7 @@ enum ScrapeSource: String, CaseIterable, Identifiable {
         case .jstor: "jstor.org"
         case .eric: "eric.ed.gov"
         case .pubmed: "pubmed.ncbi.nlm.nih.gov"
+        case .nara: "catalog.archives.gov"
         }
     }
 }

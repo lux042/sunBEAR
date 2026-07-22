@@ -32,6 +32,7 @@ enum ExportService {
     /// automatic `.enw` importer, which cannot select a user's custom filter.
     static func endNoteXML(items: [Item]) -> String {
         let records = items.map { item in
+            let reference = endNoteReference(for: item)
             let relatedURLs = (item.pdfURLs + [item.recordURL]).filter { !$0.isEmpty }.map {
                 "<url>\(xmlStyle($0))</url>"
             }.joined()
@@ -40,8 +41,8 @@ enum ExportService {
             }.joined()
             return """
             <record>
-            <ref-type name="CIA">40</ref-type>
-            <titles><title>\(xmlStyle(item.title))</title></titles>
+            <ref-type name="\(reference.name)">\(reference.number)</ref-type>
+            <titles><title>\(xmlStyle(item.title))</title>\(item.collection.isEmpty ? "" : "<secondary-title>\(xmlStyle(item.collection))</secondary-title>")</titles>
             \(item.pageCount > 0 ? "<pages>\(xmlStyle(String(item.pageCount)))</pages>" : "")
             \(item.publicationDate.isEmpty ? "" : "<dates><pub-dates><date>\(xmlStyle(item.publicationDate))</date></pub-dates></dates>")
             \(item.body.isEmpty ? "" : "<abstract>\(xmlStyle(item.body))</abstract>")
@@ -57,9 +58,9 @@ enum ExportService {
     /// built-in "EndNote Import" filter, avoiding a manual TSV import setup.
     static func endNoteImport(items: [Item]) -> String {
         items.map { item in
-            // The receiving EndNote installation defines a custom reference
-            // type named "CIA" with these standard tagged fields enabled.
-            var fields = ["%0 CIA", "%T \(tagValue(item.title))"]
+            let reference = endNoteReference(for: item)
+            var fields = ["%0 \(reference.name)", "%T \(tagValue(item.title))"]
+            if reference.name != "CIA" { appendTagged("%J", value: item.collection, to: &fields) }
             appendNotes(for: item, to: &fields)
             if item.pageCount > 0 { fields.append("%P \(item.pageCount)") }
             appendTagged("%8", value: item.publicationDate, to: &fields)
@@ -117,10 +118,11 @@ enum ExportService {
     }
 
     private static func notesValue(for item: Item) -> String {
+        let source = source(for: item)
         let values = [
             ("Document Type", item.documentType),
             ("Collection", item.collection),
-            ("Document Number (FOIA) / ESDN (CREST)", item.documentNumber),
+            (identifierLabel(for: source), item.documentNumber),
             ("Release Decision", item.releaseDecision),
             ("Original Classification", item.originalClassification),
             ("Document Creation Date", item.documentCreationDate),
@@ -134,6 +136,46 @@ enum ExportService {
             return value.isEmpty ? nil : "\(label): \(value)"
         }.joined(separator: " | ")
         return notes
+    }
+
+    private static func source(for item: Item) -> ScrapeSource {
+        guard let url = URL(string: item.recordURL), let source = ScrapeSource.source(for: url) else {
+            // Older CIA records and tests may contain redirected or placeholder
+            // URLs, so retain the app's original CIA behavior when unknown.
+            return .cia
+        }
+        return source
+    }
+
+    private static func identifierLabel(for source: ScrapeSource) -> String {
+        switch source {
+        case .cia: "Document Number (FOIA) / ESDN (CREST)"
+        case .jstor: "JSTOR Stable ID"
+        case .eric: "ERIC Number"
+        case .pubmed: "PMID"
+        case .nara: "National Archives Identifier (NAID)"
+        }
+    }
+
+    private static func endNoteReference(for item: Item) -> (name: String, number: Int) {
+        let type = item.documentType.lowercased()
+        switch source(for: item) {
+        case .cia:
+            return ("CIA", 40)
+        case .pubmed:
+            return ("Journal Article", 17)
+        case .jstor:
+            if type.contains("book") { return ("Book", 6) }
+            if type.contains("report") { return ("Report", 27) }
+            return ("Journal Article", 17)
+        case .eric:
+            if type.contains("journal") { return ("Journal Article", 17) }
+            if type.contains("report") { return ("Report", 27) }
+            if type.contains("book") { return ("Book", 6) }
+            return ("Generic", 13)
+        case .nara:
+            return ("Generic", 13)
+        }
     }
 
     private static func xmlStyle(_ value: String) -> String {

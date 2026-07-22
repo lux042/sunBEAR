@@ -22,7 +22,7 @@ enum EndNoteService {
             .appendingPathComponent("sunBEAR-EndNote", isDirectory: true)
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
 
-        let filename = safeFilename("CIA \(sessionName).xml")
+        let filename = safeFilename("sunBEAR \(sessionName).xml")
         let fileURL = directory.appendingPathComponent(filename)
         try ExportService.endNoteXML(items: items).write(to: fileURL, atomically: true, encoding: .utf8)
 
@@ -85,6 +85,6 @@ enum EndNoteService {
     private static func safeFilename(_ value: String) -> String {
         let invalid = CharacterSet(charactersIn: "/\\:?\"<>|").union(.newlines)
         let cleaned = value.components(separatedBy: invalid).filter { !$0.isEmpty }.joined(separator: "-")
-        return cleaned.isEmpty ? "CIA sunBEAR export.enw" : String(cleaned.prefix(180))
+        return cleaned.isEmpty ? "sunBEAR EndNote export.xml" : String(cleaned.prefix(180))
     }
 }
