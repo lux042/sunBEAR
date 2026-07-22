@@ -46,5 +46,7 @@
 	<string>17F113</string>
 	<key>LSMinimumSystemVersion</key>
 	<string>26.5</string>
+	<key>NSAppleEventsUsageDescription</key>
+	<string>sunBEAR sends selected CIA records to your open EndNote library.</string>
 </dict>
 </plist>
