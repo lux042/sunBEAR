@@ -39,7 +39,7 @@ public sealed class MainForm : Form
     public MainForm(LibraryStore store,Library library,string? smokeFolder=null,string? renderFolder=null)
     {
         this.store=store;this.library=library;
-        Text="sunBEAR 1.5.1 — Research Library";Size=new Size(1320,860);MinimumSize=new Size(1040,780);
+        Text="sunBEAR 1.5.2 — Research Library";Size=new Size(1320,860);MinimumSize=new Size(1040,780);
         StartPosition=FormStartPosition.CenterScreen;Font=new Font("Segoe UI",10);BackColor=Color.White;
         if(smokeFolder!=null || renderFolder!=null){ShowInTaskbar=false;Opacity=0;}
         Icon=Icon.ExtractAssociatedIcon(Environment.ProcessPath!);
@@ -91,8 +91,8 @@ public sealed class MainForm : Form
             if(renderFolder!=null){
 var testGroup=tree.Nodes.Add("Selection checks");
 var one=testGroup.Nodes.Add("Search one");one.Tag=new Session();var two=testGroup.Nodes.Add("Search two");two.Tag=new Session();var three=testGroup.Nodes.Add("Search three");three.Tag=new Session();testGroup.Expand();
-tree.Choose(one,false,false);tree.Choose(three,false,true);if(tree.SelectedNodes.Count()!=3 || SelectedSessions().Count()!=3)throw new Exception("Session range failed");
-tree.Choose(two,true,false);if(tree.SelectedNodes.Count()!=2)throw new Exception("Session Ctrl toggle failed");tree.Choose(two,false,false);if(tree.SelectedNodes.Count()!=1)throw new Exception("Session single selection failed");RefreshTree();
+tree.ClickForTest(one,false,false);tree.ClickForTest(three,false,true);if(tree.SelectedNodes.Count()!=3 || SelectedSessions().Count()!=3)throw new Exception("Session range failed");
+tree.ClickForTest(two,true,false);if(tree.SelectedNodes.Count()!=2)throw new Exception("Session Ctrl toggle failed");tree.ClickForTest(two,false,false);if(tree.SelectedNodes.Count()!=1)throw new Exception("Session single selection failed");RefreshTree();
 var sample=new[]{new Record{Title="First"},new Record{Title="Second"},new Record{Title="Third"}};
 grid.DataSource=new SortableList<Record>(sample.ToList());grid.ClearSelection();grid.Rows[0].Selected=true;grid.Rows[2].Selected=true;
 if(ExportRecords().Count!=2 || ExportRecords()[1].Title!="Third" || !count.Text.Contains("2 selected"))throw new Exception("Selection scope/count incorrect");
@@ -103,7 +103,7 @@ status.Text="Downloading article page 4 of 12…";start.Enabled=false;stop.Enabl
 var waiting=RequestAccess(cancelTest.Token);if(waiting.IsCompleted || browser.Busy || !resume.Visible)throw new Exception("Access did not pause");cancelTest.Cancel();try{await waiting;throw new Exception("Pause did not cancel");}catch(OperationCanceledException){}if(accessReady!=null || resume.Visible)throw new Exception("Pause cleanup failed");
 }
 var continuing=RequestAccess(CancellationToken.None);accessReady!.TrySetResult();await continuing;if(!browser.Busy || resume.Visible)throw new Exception("Resume failed");HideLoading();
-File.WriteAllText(Path.Combine(renderFolder,"render-result.txt"),"PASS Session Shift range/Ctrl toggle/single selection; multi-row selection scope/count, select all and clear/visible fallback; determinate progress 3/12 = 25%; loading view restored; access pause waits, resumes, cancels and cleans up.");Close();return;}
+File.WriteAllText(Path.Combine(renderFolder,"render-result.txt"),"PASS Native mouse-message session Shift range/Ctrl toggle/single selection; multi-row selection scope/count, select all and clear/visible fallback; determinate progress 3/12 = 25%; loading view restored; access pause waits, resumes, cancels and cleans up.");Close();return;}
             if(smokeFolder!=null)CaptureWindow(smokeFolder);
             try {tabs.SelectedTab=browserTab;await browser.Initialize(store.Root);tabs.SelectedTab=libraryTab;browserReady=true;status.Text="Ready — choose a source and browse, or paste a search-results URL.";if(smokeFolder!=null)await SmokeTest(smokeFolder);}
             catch(Exception e){if(smokeFolder!=null){File.WriteAllText(Path.Combine(smokeFolder,"smoke-result.txt"),"PASS Windows form initialized and rendered\nBLOCKED Browser integration test: "+e);Close();return;}status.Text="Browser unavailable. Saved records and exports remain available.";MessageBox.Show(this,"The embedded browser could not start. Ensure Microsoft Edge WebView2 Runtime is installed and sunBEAR can write to its browser profile folder.\n\nProfile: "+Path.Combine(store.Root,"Browser")+"\n\n"+e.Message,"Browser setup",MessageBoxButtons.OK,MessageBoxIcon.Information);}
