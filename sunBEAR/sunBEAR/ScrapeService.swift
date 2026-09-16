@@ -23,7 +23,7 @@ final class ScrapeService {
         let pageLimit = Self.clampedPageLimit(pageLimit)
         // Keep all NYT navigation in the same signed-in browser. Other sources
         // continue to use an independent background loader.
-        pageLoader = WebPageLoader(webView: source == .nyt ? authenticatedWebView : nil)
+        pageLoader = WebPageLoader(webView: [.nyt, .jstor].contains(source) ? authenticatedWebView : nil)
         isRunning = true
         completed = 0
         total = 0
@@ -56,7 +56,7 @@ final class ScrapeService {
                     status = "Reading search page \(visitedPages.count)…"
                     session.pagesScraped = visitedPages.count
                     let page: (html: String, finalURL: URL)
-                    if source == .nyt, let renderedSearchHTML, !usedRenderedNYTPage {
+                    if [.nyt, .jstor].contains(source), let renderedSearchHTML, !usedRenderedNYTPage {
                         page = (renderedSearchHTML, current)
                         usedRenderedNYTPage = true
                     } else {

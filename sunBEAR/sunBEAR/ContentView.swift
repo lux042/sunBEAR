@@ -92,7 +92,7 @@ struct ContentView: View {
             SearchBrowser(webView: browserSession.webView, source: selectedSource, initialURL: browserURLOverride ?? browserInitialURL, pageCount: requestedPageCount) { url, renderedHTML in
                 searchURL = url.absoluteString
                 if let folder = downloadFolder {
-                    if let session = scraper.start(searchURL: url, destination: folder, shouldDownloadPDFs: selectedSource != .nyt && shouldDownloadPDFs, saveArticlePages: selectedSource == .nyt && shouldSaveArticlePages, pageLimit: requestedPageCount, renderedSearchHTML: renderedHTML, authenticatedWebView: selectedSource == .nyt ? browserSession.webView : nil, context: modelContext) {
+                    if let session = scraper.start(searchURL: url, destination: folder, shouldDownloadPDFs: selectedSource != .nyt && shouldDownloadPDFs, saveArticlePages: selectedSource == .nyt && shouldSaveArticlePages, pageLimit: requestedPageCount, renderedSearchHTML: renderedHTML, authenticatedWebView: [.nyt, .jstor].contains(selectedSource) ? browserSession.webView : nil, context: modelContext) {
                         sessionSelections = [session.id]
                     }
                 } else {
@@ -345,15 +345,15 @@ struct ContentView: View {
                 TextField(selectedSource.searchURLPrompt, text: $searchURL)
                     .textFieldStyle(.roundedBorder)
 
-                Button(selectedSource == .nyt ? "Search New York Times" : "Browse source") {
+                Button(browserButtonTitle) {
                     openSourceBrowser(at: browserInitialURL ?? selectedSource.homeURL)
                 }
 
                 Button("Import records") { startScrape() }
                     .buttonStyle(.borderedProminent)
                     .tint(actionGreen)
-                    .disabled(selectedSource == .nyt || scraper.isRunning || downloadFolder == nil || URL(string: searchURL) == nil)
-                    .help(selectedSource == .nyt ? "Use Search New York Times so sunBEAR imports the rendered results from your signed-in browser session." : "Import the pasted search-results URL")
+                    .disabled([.nyt, .jstor].contains(selectedSource) || scraper.isRunning || downloadFolder == nil || URL(string: searchURL) == nil)
+                    .help([.nyt, .jstor].contains(selectedSource) ? "Use the source browser so sunBEAR imports with the same signed-in session." : "Import the pasted search-results URL")
             }
             HStack(spacing: 14) {
                 Stepper("Search pages: \(requestedPageCount)", value: $requestedPageCount, in: 1...ScrapeService.maximumSearchPages)
@@ -390,6 +390,14 @@ struct ContentView: View {
     private var browserInitialURL: URL? {
         guard let url = URL(string: searchURL), selectedSource.canImport(url) else { return nil }
         return url
+    }
+
+    private var browserButtonTitle: String {
+        switch selectedSource {
+        case .nyt: "Search New York Times"
+        case .jstor: "Search JSTOR"
+        default: "Browse source"
+        }
     }
 
     private func openSourceBrowser(at url: URL?) {

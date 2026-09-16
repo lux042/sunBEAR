@@ -61,8 +61,8 @@ struct SearchBrowser: View {
                     .padding(.horizontal, 10)
                     .padding(.bottom, 8)
             }
-            if source == .nyt && browserMessage.isEmpty {
-                Text("Search or sign in here, then import the visible results. This browser keeps the same NYT session each time you open it.")
+            if (source == .nyt || source == .jstor) && browserMessage.isEmpty {
+                Text(browserGuidance)
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -78,6 +78,13 @@ struct SearchBrowser: View {
     private var importButtonTitle: String {
         if source == .nyt, nytSignedIn == false { return "Sign in to import" }
         return source == .nyt ? "Import This Search" : "Import This \(source.title) Search"
+    }
+
+    private var browserGuidance: String {
+        if source == .jstor {
+            return "Search or sign in here. To download PDFs, choose Prepare PDF Downloads once and accept JSTOR's terms if prompted, then return to the results and import."
+        }
+        return "Search or sign in here, then import the visible results. This browser keeps the same NYT session each time you open it."
     }
 
     private var canImportCurrentPage: Bool {
