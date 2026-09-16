@@ -2,6 +2,68 @@ import XCTest
 @testable import sunBEAR
 
 final class sunBEARTests: XCTestCase {
+    func testNewYorkTimesURLValidationAndResults() throws {
+        let topic = try XCTUnwrap(URL(string: "https://www.nytimes.com/topic/destination/ecuador"))
+        XCTAssertTrue(ScrapeSource.nyt.canImport(topic))
+        XCTAssertTrue(ScrapeSource.nyt.canImport(URL(string: "https://www.nytimes.com/search?query=ecuador")))
+        XCTAssertTrue(ScrapeSource.nyt.canImport(URL(string: "https://www.nytimes.com/2026/01/02/world/americas/ecuador.html")))
+        XCTAssertFalse(ScrapeSource.nyt.canImport(URL(string: "https://myaccount.nytimes.com/auth/login")))
+        let html = """
+        <main><a href="/2026/01/02/world/americas/ecuador.html?smid=share">Article</a>
+        <a href="/2026/01/02/world/americas/ecuador.html">Duplicate</a>
+        <a href="/2025/01/01/crosswords/how-to-solve-beginner-crosswords.html">Unrelated crossword</a></main>
+        """
+        XCTAssertEqual(NewYorkTimesHTMLParser.resultLinks(in: html, baseURL: topic).map(\.absoluteString), [
+            "https://www.nytimes.com/2026/01/02/world/americas/ecuador.html"
+        ])
+    }
+
+    func testNewYorkTimesStructuredMetadata() throws {
+        let url = try XCTUnwrap(URL(string: "https://www.nytimes.com/2026/01/02/world/americas/ecuador.html"))
+        let html = """
+        <link rel="canonical" href="https://www.nytimes.com/2026/01/02/world/americas/ecuador.html?smid=share">
+        <script type="application/ld+json">{"@type":"NewsArticle","headline":"Ecuador &amp; Its Neighbors","description":"A regional report.","datePublished":"2026-01-02","identifier":"nyt://article/example"}</script>
+        """
+        let document = NewYorkTimesHTMLParser.document(from: html, url: url)
+        XCTAssertEqual(document.title, "Ecuador & Its Neighbors")
+        XCTAssertEqual(document.body, "A regional report.")
+        XCTAssertEqual(document.fields["Document Type"], "Newspaper Article")
+        XCTAssertEqual(document.fields["Collection"], "The New York Times")
+        XCTAssertEqual(document.fields["Publication Date"], "2026-01-02")
+        XCTAssertEqual(document.fields["Document Number (FOIA) /ESDN (CREST)"], "nyt://article/example")
+    }
+
+    func testNewYorkTimesFolderNameIsNotJSTOR() throws {
+        let url = try XCTUnwrap(URL(string: "https://www.nytimes.com/search?query=ecuador"))
+        let date = try XCTUnwrap(Calendar(identifier: .gregorian).date(from: DateComponents(timeZone: TimeZone(secondsFromGMT: 0), year: 2026, month: 9, day: 15, hour: 23, minute: 26, second: 53)))
+        XCTAssertTrue(ScrapeFolderNaming.folderName(for: url, date: date).hasPrefix("New York Times - ecuador - "))
+    }
+
+    func testNewYorkTimesReadableArticlePage() throws {
+        let url = try XCTUnwrap(URL(string: "https://www.nytimes.com/2026/01/02/world/example.html"))
+        let document = ScrapedDocument(title: "Readable article", fields: ["Publication Date": "2026-01-02"], recordURL: url)
+        let html = "<section name='articleBody'><p>First readable paragraph.</p><p>Second readable paragraph.</p></section>"
+        let saved = try NewYorkTimesHTMLParser.readableArticlePage(from: html, document: document)
+        XCTAssertTrue(saved.contains("First readable paragraph."))
+        XCTAssertTrue(saved.contains("Open original article"))
+        XCTAssertTrue(saved.contains(url.absoluteString))
+    }
+
+    func testNewYorkTimesStoresFullArticleBodyInsteadOfAbstract() throws {
+        let url = try XCTUnwrap(URL(string: "https://www.nytimes.com/2026/01/02/world/example.html"))
+        let html = """
+        <meta name="description" content="Short abstract only.">
+        <h1>A complete report</h1>
+        <section name="articleBody">
+          <div><p>First full article paragraph.</p></div>
+          <div><p>Second full article paragraph with more reporting.</p></div>
+        </section>
+        """
+        let document = NewYorkTimesHTMLParser.document(from: html, url: url)
+        XCTAssertEqual(document.body, "First full article paragraph.\n\nSecond full article paragraph with more reporting.")
+        XCTAssertFalse(document.body.contains("Short abstract only"))
+    }
+
     func testResultLinksAndPagination() throws {
         let base = try XCTUnwrap(URL(string: "https://www.cia.gov/readingroom/search/site/test"))
         let html = """

@@ -9,12 +9,17 @@ final class WebPageLoader: NSObject, WKNavigationDelegate {
     private var continuation: CheckedContinuation<(html: String, finalURL: URL), Error>?
     private var requestedURL: URL?
 
-    override init() {
-        let configuration = WKWebViewConfiguration()
-        // Share the visible search browser's cookies/session with the scraper.
-        configuration.websiteDataStore = .default()
-        configuration.defaultWebpagePreferences.allowsContentJavaScript = true
-        webView = WKWebView(frame: .zero, configuration: configuration)
+    init(webView existingWebView: WKWebView? = nil) {
+        if let existingWebView {
+            // NYT imports must use the exact browser instance in which the user
+            // signed in. A second WKWebView can temporarily see stale cookies.
+            webView = existingWebView
+        } else {
+            let configuration = WKWebViewConfiguration()
+            configuration.websiteDataStore = .default()
+            configuration.defaultWebpagePreferences.allowsContentJavaScript = true
+            webView = WKWebView(frame: .zero, configuration: configuration)
+        }
         super.init()
         webView.navigationDelegate = self
         webView.customUserAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Safari/605.1.15"
@@ -43,7 +48,12 @@ final class WebPageLoader: NSObject, WKNavigationDelegate {
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         // Both sources populate portions of their result pages after navigation.
         Task {
-            try? await Task.sleep(for: .milliseconds(750))
+            let isNYT = webView.url?.host?.lowercased().hasSuffix("nytimes.com") == true
+            try? await Task.sleep(for: isNYT ? .milliseconds(1_500) : .milliseconds(750))
+            if isNYT {
+                _ = try? await webView.evaluateJavaScript("window.scrollTo(0, document.body.scrollHeight)")
+                try? await Task.sleep(for: .milliseconds(1_000))
+            }
             do {
                 let value = try await webView.evaluateJavaScript("document.documentElement.outerHTML")
                 guard let html = value as? String, let finalURL = webView.url else { throw LoaderError.noHTML }

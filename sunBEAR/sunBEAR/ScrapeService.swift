@@ -1,5 +1,6 @@
 import Foundation
 import SwiftData
+import WebKit
 
 @MainActor
 @Observable
@@ -10,16 +11,19 @@ final class ScrapeService {
     var completed = 0
     var total = 0
     private var task: Task<Void, Never>?
-    private let pageLoader = WebPageLoader()
+    private var pageLoader = WebPageLoader()
 
     @discardableResult
-    func start(searchURL: URL, destination: URL, shouldDownloadPDFs: Bool, pageLimit: Int, context: ModelContext) -> ScrapeSession? {
+    func start(searchURL: URL, destination: URL, shouldDownloadPDFs: Bool, saveArticlePages: Bool = false, pageLimit: Int, renderedSearchHTML: String? = nil, authenticatedWebView: WKWebView? = nil, context: ModelContext) -> ScrapeSession? {
         guard !isRunning else { return nil }
         guard let source = ScrapeSource.source(for: searchURL) else {
             status = "Choose a supported source's search-results URL."
             return nil
         }
         let pageLimit = Self.clampedPageLimit(pageLimit)
+        // Keep all NYT navigation in the same signed-in browser. Other sources
+        // continue to use an independent background loader.
+        pageLoader = WebPageLoader(webView: source == .nyt ? authenticatedWebView : nil)
         isRunning = true
         completed = 0
         total = 0
@@ -42,10 +46,22 @@ final class ScrapeService {
                 var pageURL: URL? = searchURL
                 var visitedPages = Set<URL>()
                 var documentURLs: [URL] = []
+                var usedRenderedNYTPage = false
+                if source == .nyt, NewYorkTimesHTMLParser.isArticle(searchURL) {
+                    documentURLs = [NewYorkTimesHTMLParser.canonical(searchURL)]
+                    session.pagesScraped = 1
+                    pageURL = nil
+                }
                 while let current = pageURL, visitedPages.count < pageLimit, visitedPages.insert(current).inserted {
                     status = "Reading search page \(visitedPages.count)…"
                     session.pagesScraped = visitedPages.count
-                    let page = try await fetchHTML(current)
+                    let page: (html: String, finalURL: URL)
+                    if source == .nyt, let renderedSearchHTML, !usedRenderedNYTPage {
+                        page = (renderedSearchHTML, current)
+                        usedRenderedNYTPage = true
+                    } else {
+                        page = try await fetchHTML(current)
+                    }
                     let html = page.html
                     if source == .cia, current.path.contains("advanced-search"), !page.finalURL.path.contains("advanced-search") {
                         throw ScrapeError.searchRedirected(page.finalURL)
@@ -66,6 +82,17 @@ final class ScrapeService {
                     case .nara:
                         documentURLs.append(contentsOf: NARAHTMLParser.resultLinks(in: html, baseURL: page.finalURL))
                         pageURL = NARAHTMLParser.nextPage(in: html, baseURL: page.finalURL)
+                    case .nyt:
+                        guard NewYorkTimesHTMLParser.isSearch(page.finalURL) else {
+                            throw ScrapeError.nytRedirected(page.finalURL)
+                        }
+                        documentURLs.append(contentsOf: NewYorkTimesHTMLParser.resultLinks(in: html, baseURL: page.finalURL))
+                        if usedRenderedNYTPage {
+                            session.pagesScraped = pageLimit
+                            pageURL = nil
+                        } else {
+                            pageURL = NewYorkTimesHTMLParser.nextPage(in: html, baseURL: page.finalURL)
+                        }
                     }
                     documentURLs = Array(Set(documentURLs)).sorted { $0.absoluteString < $1.absoluteString }
                     try Task.checkCancellation()
@@ -90,10 +117,21 @@ final class ScrapeService {
                         }
                         scraped = document
                     case .nara: scraped = NARAHTMLParser.document(from: html, url: url)
+                    case .nyt: scraped = NewYorkTimesHTMLParser.document(from: html, url: url)
                     }
                     let item = makeItem(scraped)
                     item.session = session
                     context.insert(item)
+                    if source == .nyt, saveArticlePages {
+                        do {
+                            let savedPage = try NewYorkTimesHTMLParser.readableArticlePage(from: html, document: scraped)
+                            let target = uniqueURL(sessionFolder.appendingPathComponent(safeName(scraped.title)).appendingPathExtension("html"))
+                            try savedPage.write(to: target, atomically: true, encoding: .utf8)
+                            item.localArticlePath = target.path
+                        } catch {
+                            item.articlePageError = error.localizedDescription
+                        }
+                    }
                     if shouldDownloadPDFs {
                         do {
                             item.localPDFPaths = try await downloadPDFs(scraped.pdfURLs, for: item, to: sessionFolder)
@@ -209,7 +247,7 @@ enum ScrapeFolderNaming {
         let source = ScrapeSource.source(for: url)
         let jstorQuery = query.first(where: { $0.name.caseInsensitiveCompare("Query") == .orderedSame })?.value?.trimmingCharacters(in: .whitespacesAndNewlines)
         let searchName: String
-        if let jstorQuery, !jstorQuery.isEmpty {
+        if source == .jstor, let jstorQuery, !jstorQuery.isEmpty {
             searchName = "JSTOR - \(jstorQuery)"
         } else if source == .eric,
                   let ericQuery = query.first(where: { $0.name.caseInsensitiveCompare("q") == .orderedSame })?.value?.trimmingCharacters(in: .whitespacesAndNewlines),
@@ -225,6 +263,10 @@ enum ScrapeFolderNaming {
                   let naraQuery = query.first(where: { $0.name.caseInsensitiveCompare("q") == .orderedSame })?.value?.trimmingCharacters(in: .whitespacesAndNewlines),
                   !naraQuery.isEmpty {
             searchName = "National Archives - \(naraQuery)"
+        } else if source == .nyt,
+                  let nytQuery = query.first(where: { ["query", "q", "search"].contains($0.name.lowercased()) })?.value?.trimmingCharacters(in: .whitespacesAndNewlines),
+                  !nytQuery.isEmpty {
+            searchName = "New York Times - \(nytQuery)"
         } else if !values.isEmpty {
             searchName = values.joined(separator: " - ")
         } else {
@@ -246,12 +288,15 @@ enum ScrapeFolderNaming {
 
 private enum ScrapeError: LocalizedError {
     case searchRedirected(URL)
+    case nytRedirected(URL)
     case notPDF(requested: URL, returned: URL?, contentType: String?)
 
     var errorDescription: String? {
         switch self {
         case .searchRedirected(let url):
             return "CIA redirected the advanced search to \(url.absoluteString). Open the search in Safari once, then retry."
+        case .nytRedirected(let url):
+            return "The New York Times redirected away from the article list to \(url.absoluteString). Open NYT inside sunBEAR, sign in or finish verification, then retry."
         case .notPDF(let requested, let returned, let contentType):
             let response = returned?.absoluteString ?? requested.absoluteString
             let type = contentType.map { " (\($0))" } ?? ""

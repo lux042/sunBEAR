@@ -21,6 +21,8 @@ final class Item {
     var body: String
     var localPDFPaths: [String]
     var downloadError: String
+    var localArticlePath: String = ""
+    var articlePageError: String = ""
     var scrapedAt: Date
     var session: ScrapeSession?
 
@@ -43,6 +45,8 @@ final class Item {
         body: String = "",
         localPDFPaths: [String] = [],
         downloadError: String = "",
+        localArticlePath: String = "",
+        articlePageError: String = "",
         scrapedAt: Date = .now,
         session: ScrapeSession? = nil
     ) {
@@ -64,6 +68,8 @@ final class Item {
         self.body = body
         self.localPDFPaths = localPDFPaths
         self.downloadError = downloadError
+        self.localArticlePath = localArticlePath
+        self.articlePageError = articlePageError
         self.scrapedAt = scrapedAt
         self.session = session
     }

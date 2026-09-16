@@ -4,17 +4,23 @@ import UniformTypeIdentifiers
 import AppKit
 
 struct ContentView: View {
+    private let forestGreen = Color(red: 30 / 255, green: 66 / 255, blue: 53 / 255)
+    private let actionGreen = Color(red: 38 / 255, green: 100 / 255, blue: 70 / 255)
+    private let warmBackground = Color(red: 248 / 255, green: 248 / 255, blue: 244 / 255)
     @Environment(\.modelContext) private var modelContext
     @Query private var items: [Item]
     @Query(sort: \ScrapeSession.startedAt, order: .reverse) private var sessions: [ScrapeSession]
     @Query(sort: \LibraryCollection.name) private var collections: [LibraryCollection]
     @State private var scraper = ScrapeService()
+    @State private var browserSession = BrowserSession()
     @State private var selectedSource = ScrapeSource.cia
     @State private var searchURL = "https://www.cia.gov/readingroom/search/site"
     @State private var downloadFolder: URL?
     @State private var choosingFolder = false
     @State private var showingSearchBrowser = false
+    @State private var browserURLOverride: URL?
     @State private var shouldDownloadPDFs = true
+    @State private var shouldSaveArticlePages = true
     @State private var requestedPageCount = 1
     @State private var filter = ""
     @State private var sessionFilter = ""
@@ -63,25 +69,30 @@ struct ContentView: View {
     private var selectedItem: Item? { items.first { $0.id == selection } }
 
     var body: some View {
-        NavigationSplitView {
-            sessionSidebar
-                .navigationTitle("sunBEAR")
-        } content: {
-            library
-                .navigationTitle("Library")
-                .searchable(text: $filter, prompt: "Title, number, collection, or text")
-        } detail: {
-            if let item = selectedItem { DocumentDetailView(item: item) }
-            else { ContentUnavailableView("Select a document", systemImage: "doc.text.magnifyingglass") }
+        VStack(spacing: 0) {
+            brandHeader
+            scrapeControls
+            statusBar
+            NavigationSplitView {
+                sessionSidebar
+                    .navigationSplitViewColumnWidth(min: 210, ideal: 245, max: 330)
+            } content: {
+                library
+                    .navigationSplitViewColumnWidth(min: 480, ideal: 690)
+            } detail: {
+                if let item = selectedItem { DocumentDetailView(item: item) }
+                else { ContentUnavailableView("Select a record", systemImage: "doc.text.magnifyingglass") }
+            }
+            .tint(forestGreen)
         }
         .fileImporter(isPresented: $choosingFolder, allowedContentTypes: [.folder]) { result in
             if case .success(let url) = result { downloadFolder = url }
         }
         .sheet(isPresented: $showingSearchBrowser) {
-            SearchBrowser(source: selectedSource, initialURL: browserInitialURL) { url in
+            SearchBrowser(webView: browserSession.webView, source: selectedSource, initialURL: browserURLOverride ?? browserInitialURL, pageCount: requestedPageCount) { url, renderedHTML in
                 searchURL = url.absoluteString
                 if let folder = downloadFolder {
-                    if let session = scraper.start(searchURL: url, destination: folder, shouldDownloadPDFs: shouldDownloadPDFs, pageLimit: requestedPageCount, context: modelContext) {
+                    if let session = scraper.start(searchURL: url, destination: folder, shouldDownloadPDFs: selectedSource != .nyt && shouldDownloadPDFs, saveArticlePages: selectedSource == .nyt && shouldSaveArticlePages, pageLimit: requestedPageCount, renderedSearchHTML: renderedHTML, authenticatedWebView: selectedSource == .nyt ? browserSession.webView : nil, context: modelContext) {
                         sessionSelections = [session.id]
                     }
                 } else {
@@ -89,7 +100,10 @@ struct ContentView: View {
                 }
             }
         }
-        .toolbar { exportToolbar }
+        .onChange(of: showingSearchBrowser) { _, showing in
+            if !showing { browserURLOverride = nil }
+        }
+        .preferredColorScheme(.light)
         .alert(pendingDeleteSessions.count == 1 ? "Delete this scrape from the library?" : "Delete \(pendingDeleteSessions.count) scrapes from the library?", isPresented: Binding(get: { !pendingDeleteSessions.isEmpty }, set: { if !$0 { pendingDeleteSessions = [] } })) {
             Button("Cancel", role: .cancel) { pendingDeleteSessions = [] }
             Button("Delete from Library", role: .destructive) {
@@ -133,15 +147,49 @@ struct ContentView: View {
             Text(endNoteAlert ?? "")
         }
         .task { createLegacySessionIfNeeded() }
-        .frame(minWidth: 1050, minHeight: 650)
+        .frame(minWidth: 1050, minHeight: 720)
+    }
+
+    private var brandHeader: some View {
+        HStack {
+            Text("sunBEAR")
+                .font(.system(size: 28, weight: .bold, design: .rounded))
+                .foregroundStyle(.white)
+            Spacer()
+        }
+        .padding(.horizontal, 24)
+        .frame(height: 68)
+        .background(forestGreen)
+    }
+
+    private var statusBar: some View {
+        HStack(spacing: 10) {
+            if scraper.isRunning {
+                ProgressView(value: scraper.total == 0 ? nil : Double(scraper.completed), total: Double(max(scraper.total, 1)))
+                    .frame(width: 150)
+            }
+            Text(scraper.status.isEmpty ? "Ready — choose a source and browse, or paste a search-results URL." : scraper.status)
+                .font(.caption)
+                .foregroundStyle(Color(red: 50 / 255, green: 70 / 255, blue: 59 / 255))
+                .lineLimit(2)
+            Spacer()
+            if scraper.isRunning, scraper.total > 0 {
+                Text("\(scraper.completed) of \(scraper.total) processed")
+                    .font(.caption.monospacedDigit())
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .padding(.horizontal, 14)
+        .frame(minHeight: 42)
+        .background(Color(red: 236 / 255, green: 239 / 255, blue: 229 / 255))
     }
 
     private var sessionSidebar: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            scrapeControls.padding([.horizontal, .top])
-            Divider()
+        VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Text("Library folders").font(.headline)
+                Text("LIBRARY")
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(.secondary)
                 Spacer()
                 Button { beginCreatingCollection() } label: {
                     Label("New Collection", systemImage: "folder.badge.plus")
@@ -160,10 +208,11 @@ struct ContentView: View {
                 }
                 .help("Sort library folders")
             }
-            .padding(.horizontal)
-            TextField("Find a scrape session", text: $sessionFilter)
+            .padding(.horizontal, 12)
+            .padding(.top, 12)
+            TextField("Find a saved search", text: $sessionFilter)
                 .textFieldStyle(.roundedBorder)
-                .padding(.horizontal)
+                .padding(.horizontal, 12)
             List(selection: $sessionSelections) {
                 ForEach(collections) { collection in
                     DisclosureGroup(isExpanded: expansionBinding(for: collection)) {
@@ -197,6 +246,8 @@ struct ContentView: View {
                         .foregroundStyle(.secondary)
                 }
             }
+            .scrollContentBackground(.hidden)
+            .background(warmBackground)
             if !selectedSessions.isEmpty, let session = selectedSession {
                 HStack {
                     Text("\(selectedSessions.count) selected").font(.caption).foregroundStyle(.secondary)
@@ -222,6 +273,7 @@ struct ContentView: View {
                 .padding([.horizontal, .bottom])
             }
         }
+        .background(warmBackground)
     }
 
     private func sessionRow(_ session: ScrapeSession) -> some View {
@@ -281,47 +333,58 @@ struct ContentView: View {
     }
 
     private var scrapeControls: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            Text("New scrape").font(.headline)
-            Picker("Source", selection: $selectedSource) {
-                ForEach(ScrapeSource.allCases) { source in Text(source.title).tag(source) }
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 8) {
+                Picker("Source", selection: $selectedSource) {
+                    ForEach(ScrapeSource.allCases) { source in Text(source.title).tag(source) }
+                }
+                .labelsHidden()
+                .frame(width: 175)
+                .onChange(of: selectedSource) { _, source in searchURL = source.defaultSearchURL }
+
+                TextField(selectedSource.searchURLPrompt, text: $searchURL)
+                    .textFieldStyle(.roundedBorder)
+
+                Button(selectedSource == .nyt ? "Search New York Times" : "Browse source") {
+                    openSourceBrowser(at: browserInitialURL ?? selectedSource.homeURL)
+                }
+
+                Button("Import records") { startScrape() }
+                    .buttonStyle(.borderedProminent)
+                    .tint(actionGreen)
+                    .disabled(selectedSource == .nyt || scraper.isRunning || downloadFolder == nil || URL(string: searchURL) == nil)
+                    .help(selectedSource == .nyt ? "Use Search New York Times so sunBEAR imports the rendered results from your signed-in browser session." : "Import the pasted search-results URL")
             }
-            .pickerStyle(.menu)
-            .onChange(of: selectedSource) { _, source in searchURL = source.defaultSearchURL }
-            Button { showingSearchBrowser = true } label: {
-                Label("Open \(selectedSource.title)", systemImage: "globe")
+            HStack(spacing: 14) {
+                Stepper("Search pages: \(requestedPageCount)", value: $requestedPageCount, in: 1...ScrapeService.maximumSearchPages)
+                    .fixedSize()
+                if selectedSource != .nyt {
+                    Toggle("Download PDFs", isOn: $shouldDownloadPDFs)
+                        .fixedSize()
+                }
+                Button { choosingFolder = true } label: {
+                    Label(downloadFolder?.lastPathComponent ?? "Save location…", systemImage: "folder")
+                }
+                .help(downloadFolder?.path ?? "Choose where downloaded source files will be saved")
+                if selectedSource == .nyt {
+                    Toggle("Save readable articles", isOn: $shouldSaveArticlePages)
+                        .fixedSize()
+                        .help("Save the readable article text available to your signed-in NYT account as offline HTML")
+                    Menu("NYT options") {
+                        Button("Open NYT Search") { openSourceBrowser(at: ScrapeSource.nyt.homeURL) }
+                        Button("Open TimesMachine") { openSourceBrowser(at: URL(string: "https://timesmachine.nytimes.com/browser")) }
+                    }
+                }
+                Spacer()
+                if scraper.isRunning {
+                    Button("Stop task", role: .destructive) { scraper.cancel() }
+                }
             }
-            .buttonStyle(.borderedProminent)
-            TextField(selectedSource.searchURLPrompt, text: $searchURL, axis: .vertical)
-                .textFieldStyle(.roundedBorder)
-                .lineLimit(2...4)
-                .frame(minHeight: 52, alignment: .topLeading)
-            Text("Search inside sunBEAR and import the results page, or paste a results URL above.")
-                .font(.caption).foregroundStyle(.secondary)
-            if selectedSource == .jstor {
-                Text("For PDFs, sign in inside sunBEAR, then use Prepare PDF Downloads in that window once. Your Chrome login is separate.")
-                    .font(.caption).foregroundStyle(.secondary)
-            } else if selectedSource == .pubmed {
-                Text("For PMC PDFs, use Prepare PDF Downloads inside the PubMed window once before scraping.")
-                    .font(.caption).foregroundStyle(.secondary)
-            }
-            Button { choosingFolder = true } label: {
-                Label(downloadFolder?.lastPathComponent ?? "Choose PDF folder", systemImage: "folder")
-            }
-            .help(downloadFolder?.path ?? "Every PDF linked by every result will be downloaded here")
-            Toggle("Download PDFs", isOn: $shouldDownloadPDFs)
-                .help("Turn off to collect metadata and abstracts without downloading PDF files")
-            Stepper("Search pages: \(requestedPageCount)", value: $requestedPageCount, in: 1...ScrapeService.maximumSearchPages)
-                .help("Choose how many search-result pages to scrape, up to 10")
-            if scraper.isRunning {
-                ProgressView(value: scraper.total == 0 ? nil : Double(scraper.completed), total: Double(max(scraper.total, 1)))
-                Button("Stop", role: .destructive) { scraper.cancel() }
-            } else {
-                Button(shouldDownloadPDFs ? "Scrape and download PDFs" : "Scrape metadata only") { startScrape() }
-                    .disabled(downloadFolder == nil || URL(string: searchURL) == nil)
-            }
-            Text(scraper.status).font(.caption).foregroundStyle(.secondary)
         }
+        .controlSize(.regular)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .background(.background)
     }
 
     private var browserInitialURL: URL? {
@@ -329,22 +392,36 @@ struct ContentView: View {
         return url
     }
 
+    private func openSourceBrowser(at url: URL?) {
+        browserURLOverride = url
+        showingSearchBrowser = true
+    }
+
     private var library: some View {
         VStack(spacing: 0) {
             if selectedSession == nil {
                 ContentUnavailableView("Select a scrape session", systemImage: "folder")
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(.white)
             } else {
-                HStack {
+                HStack(spacing: 12) {
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(selectedSession?.name ?? "").font(.headline).lineLimit(1)
+                        Text("Saved records").font(.title3.bold()).lineLimit(1)
                         Text("\(displayedItems.count) of \(selectedSession?.items.count ?? 0) records")
                             .font(.caption).foregroundStyle(.secondary)
                     }
                     Spacer()
-                    if !filter.isEmpty { Button("Clear Search") { filter = "" } }
+                    TextField("Search saved records", text: $filter)
+                        .textFieldStyle(.roundedBorder)
+                        .frame(width: 220)
+                    Menu("Export…") {
+                        Button("Spreadsheet (TSV)") { exportSessions(selectedSessions) }
+                        Button("Send to EndNote") { sendToEndNote(selectedSessions) }
+                    }
                 }
                 .padding(.horizontal)
                 .padding(.vertical, 8)
+                .background(Color(red: 236 / 255, green: 242 / 255, blue: 238 / 255))
                 Divider()
                 Table(displayedItems, selection: $selection, sortOrder: $sortOrder) {
             TableColumn("Title", value: \Item.title) { Text($0.title).lineLimit(2) }.width(min: 240, ideal: 360)
@@ -359,21 +436,12 @@ struct ContentView: View {
                 }
             }
         }
-    }
-
-    @ToolbarContentBuilder private var exportToolbar: some ToolbarContent {
-        ToolbarItemGroup {
-            Button { exportSessions(selectedSessions) } label: { Label("Export TSV", systemImage: "square.and.arrow.up") }
-                .disabled(selectedSessions.isEmpty)
-            Button { sendToEndNote(selectedSessions) } label: { Label("Send to EndNote", systemImage: "books.vertical") }
-                .disabled(selectedSessions.isEmpty)
-                .help("Opens the selected scrape records directly in EndNote")
-        }
+        .background(.white)
     }
 
     private func startScrape() {
         guard let url = URL(string: searchURL), let folder = downloadFolder else { return }
-        if let session = scraper.start(searchURL: url, destination: folder, shouldDownloadPDFs: shouldDownloadPDFs, pageLimit: requestedPageCount, context: modelContext) {
+        if let session = scraper.start(searchURL: url, destination: folder, shouldDownloadPDFs: shouldDownloadPDFs, saveArticlePages: selectedSource == .nyt && shouldSaveArticlePages, pageLimit: requestedPageCount, context: modelContext) {
             sessionSelections = [session.id]
         }
     }
@@ -606,6 +674,7 @@ private struct DocumentDetailView: View {
                     Link("Open downloaded PDF \(index + 1)", destination: URL(fileURLWithPath: path))
                 }
                 if !item.downloadError.isEmpty { Text(item.downloadError).foregroundStyle(.orange) }
+                if !item.articlePageError.isEmpty { Text("Article page: \(item.articlePageError)").foregroundStyle(.orange) }
                 Text("Abstract").font(.headline)
                 Text(item.body.isEmpty ? "No body text was found." : item.body).textSelection(.enabled)
             }

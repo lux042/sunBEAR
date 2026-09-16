@@ -154,6 +154,7 @@ enum ExportService {
         case .eric: "ERIC Number"
         case .pubmed: "PMID"
         case .nara: "National Archives Identifier (NAID)"
+        case .nyt: "NYT Article ID"
         }
     }
 
@@ -175,6 +176,8 @@ enum ExportService {
             return ("Generic", 13)
         case .nara:
             return ("Generic", 13)
+        case .nyt:
+            return ("Newspaper Article", 23)
         }
     }
 

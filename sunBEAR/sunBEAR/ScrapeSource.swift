@@ -6,6 +6,7 @@ enum ScrapeSource: String, CaseIterable, Identifiable {
     case eric
     case pubmed
     case nara
+    case nyt
 
     var id: Self { self }
 
@@ -16,6 +17,7 @@ enum ScrapeSource: String, CaseIterable, Identifiable {
         case .eric: "ERIC"
         case .pubmed: "PubMed"
         case .nara: "National Archives"
+        case .nyt: "New York Times"
         }
     }
 
@@ -26,6 +28,7 @@ enum ScrapeSource: String, CaseIterable, Identifiable {
         case .eric: URL(string: "https://eric.ed.gov/")!
         case .pubmed: URL(string: "https://pubmed.ncbi.nlm.nih.gov/")!
         case .nara: URL(string: "https://catalog.archives.gov/")!
+        case .nyt: URL(string: "https://www.nytimes.com/search")!
         }
     }
 
@@ -36,6 +39,7 @@ enum ScrapeSource: String, CaseIterable, Identifiable {
         case .eric: "https://eric.ed.gov/"
         case .pubmed: "https://pubmed.ncbi.nlm.nih.gov/"
         case .nara: "https://catalog.archives.gov/search?page=1&q="
+        case .nyt: "https://www.nytimes.com/search?query="
         }
     }
 
@@ -55,6 +59,8 @@ enum ScrapeSource: String, CaseIterable, Identifiable {
         case .nara:
             let query = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems ?? []
             return url.path == "/search" && query.contains { $0.name == "q" && !($0.value ?? "").isEmpty }
+        case .nyt:
+            return NewYorkTimesHTMLParser.isSearch(url) || NewYorkTimesHTMLParser.isArticle(url)
         }
     }
 
@@ -69,6 +75,7 @@ enum ScrapeSource: String, CaseIterable, Identifiable {
         case .eric: "eric.ed.gov"
         case .pubmed: "pubmed.ncbi.nlm.nih.gov"
         case .nara: "catalog.archives.gov"
+        case .nyt: "nytimes.com"
         }
     }
 }
