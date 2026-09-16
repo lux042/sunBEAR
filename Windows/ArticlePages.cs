@@ -72,6 +72,13 @@ public static class ArticlePages
           if(text)blocks.push({kind:node.tagName.toLowerCase(),text});
         }
       }
+      if(blocks.length===0){
+        for(const node of document.querySelectorAll('[data-testid="paragraph"],[data-testid="story-body"],[data-testid="article-body"]')){
+          if(!/^(P|H2|H3|BLOCKQUOTE)$/.test(node.tagName) || !visible(node) || node.closest('aside,nav,figure,footer,[data-testid="recirculation"],[data-testid="newsletter-signup"]'))continue;
+          const text=(node.innerText||'').trim();
+          if(text && !/subscribe to the times|already a subscriber|thanks for reading the times/i.test(text))blocks.push({kind:node.tagName.toLowerCase(),text});
+        }
+      }
       return {url:location.href,accessBlocked:false,message:'',blocks};
     })()
     """;

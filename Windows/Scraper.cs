@@ -4,7 +4,7 @@ using System.Net.Http;
 namespace SunBear;
 public sealed class Scraper(BrowserPane browser, Action<int,int>? progress=null, Func<CancellationToken,Task>? requestAccess=null)
 {
-    public async Task Run(Session session,bool pdfs,int pages,Action<string> status,Action save,CancellationToken token,bool saveArticlePages=true)
+    public async Task Run(Session session,bool pdfs,int pages,Action<string> status,Action save,CancellationToken token,bool saveArticlePages=true,ImportPage? initialPage=null)
     {
         progress?.Invoke(0,0);
         var start=new Uri(session.SearchURL); var source=Sources.Index(start);
@@ -14,7 +14,7 @@ public sealed class Scraper(BrowserPane browser, Action<int,int>? progress=null,
             if(NewYorkTimesParser.IsArticle(start)){documents.Add(NewYorkTimesParser.Canonical(start));session.PagesScraped=1;save();}
             else {
                 status("Reading NYT article list…");
-                var loaded=browser.View.Source?.AbsoluteUri==start.AbsoluteUri?await browser.SnapshotPage():await browser.LoadPage(start,token);
+                var loaded=initialPage!=null?(Html:initialPage.Html,Url:initialPage.Url):browser.View.Source?.AbsoluteUri==start.AbsoluteUri?await browser.SnapshotPage():await browser.LoadPage(start,token);
                 for(int batch=1;batch<=Math.Clamp(pages,1,10);batch++) {
                     token.ThrowIfCancellationRequested();
                     if(!NewYorkTimesParser.IsSearch(loaded.Url))throw new IOException("NYT redirected away from the article list. Open the Browser tab, sign in if needed, and retry.");
@@ -27,7 +27,7 @@ public sealed class Scraper(BrowserPane browser, Action<int,int>? progress=null,
         }
         while(page!=null && visited.Count<Math.Clamp(pages,1,10) && visited.Add(page)) {
             token.ThrowIfCancellationRequested(); status($"Reading search page {visited.Count}…");
-            var loaded=await browser.LoadPage(page,token);
+            var loaded=visited.Count==1 && initialPage!=null?(Html:initialPage.Html,Url:initialPage.Url):await browser.LoadPage(page,token);
             if(Sources.Index(loaded.Url)!=source || !Sources.CanImport(loaded.Url)) throw new IOException("The site redirected away from this search. Finish signing in inside sunBEAR, run your search, and try again.");
             var found=Parser.ResultLinks(loaded.Html,loaded.Url);
             documents.UnionWith(found); session.PagesScraped=visited.Count; save();
@@ -39,12 +39,13 @@ public sealed class Scraper(BrowserPane browser, Action<int,int>? progress=null,
             token.ThrowIfCancellationRequested(); status($"Importing {completed+1} of {documents.Count}…");
             var loaded=await browser.LoadPage(url,token);
             ArticleCapture? article=null;
-            if(source==5 && saveArticlePages){article=await ReadWithAccess(url,token);loaded=await browser.SnapshotPage();}
+            if(source==5){article=saveArticlePages?await ReadWithAccess(url,token):await browser.ReadArticle(token);loaded=await browser.SnapshotPage();}
             if(Sources.Index(loaded.Url)!=source) throw new IOException("A record redirected to another site. Finish sign-in in the browser and retry.");
             var record=Parser.Document(loaded.Html,url);
             if(record.Title=="Untitled" || record.Title.Contains("Access Denied",StringComparison.OrdinalIgnoreCase) || record.Title.Contains("Just a moment",StringComparison.OrdinalIgnoreCase)) throw new IOException("The source returned a sign-in, verification, or unreadable page instead of a record. Open the Browser tab to resolve it.");
             if(source==5 && System.Text.RegularExpressions.Regex.IsMatch(record.Title,@"^(The New York Times|TimesMachine|Log in|Sign in|Subscribe|Please enable|Verify you|Are you a robot)(?:$|\s*[-:|]|\s+to\b)",System.Text.RegularExpressions.RegexOptions.IgnoreCase))
                 throw new IOException("NYT returned a site, sign-in, or verification page rather than article metadata. Open the Browser tab to check access, then retry.");
+            if(source==5 && article is {AccessBlocked:false} && article.Blocks.Count>0 && Uri.TryCreate(article.Url,UriKind.Absolute,out var capturedUrl) && NewYorkTimesParser.Canonical(capturedUrl)==NewYorkTimesParser.Canonical(url))record.FullText=string.Join("\n\n",article.Blocks.Select(b=>b.Text.Trim()));
             if(source==5 && saveArticlePages) {
                 try{await ArticlePages.Save(record,session.FolderPath,article!,token);}
                 catch(OperationCanceledException){throw;}

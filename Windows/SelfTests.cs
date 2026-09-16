@@ -8,6 +8,29 @@ public static class SelfTests
         void Test(string name,Action action){try{action();output.Add("PASS "+name);}catch(Exception e){failed++;output.Add("FAIL "+name+": "+e);}}
         void Equal<T>(T expected,T actual){if(!Equals(expected,actual))throw new Exception($"Expected {expected}, got {actual}");}
         void True(bool value){if(!value)throw new Exception("Assertion failed");}
+        Test("Rendered NYT search recovers query without changing visible context",()=>{
+            var actual=new Uri("https://www.nytimes.com/search?sort=newest");var html="<main><a href='/2026/01/01/world/example.html'>Example</a></main>";
+            var page=BrowserImport.Prepare(html,actual,"Ecuador & trade");Equal(actual,page.BrowserUrl);Equal("Ecuador & trade",Sources.Query(page.Url)["query"]);Equal("newest",Sources.Query(page.Url)["sort"]);Equal(html,page.Html);
+            foreach(var candidate in new[]{("",html),("Ecuador","<main>No results</main>")}){bool rejected=false;try{BrowserImport.Prepare(candidate.Item2,actual,candidate.Item1);}catch(IOException){rejected=true;}True(rejected);}
+            True(!BrowserImport.IsNytSearchPage(new("https://fakenytimes.com/search")));
+        });
+        Test("NYT games links excluded unless explicitly searched",()=>{
+            var html="<main><a href='/2026/01/01/world/news.html'>News</a><a href='/2026/01/01/crosswords/puzzle.html'>Puzzle</a></main>";
+            Equal(1,NewYorkTimesParser.Results(html,new("https://www.nytimes.com/search?query=Ecuador")).Count);
+            Equal(2,NewYorkTimesParser.Results(html,new("https://www.nytimes.com/search?query=crosswords")).Count);
+        });
+        Test("PDF preparation restricts links to the selected publisher",()=>{
+            Equal("https://www.jstor.org/stable/pdf/123.pdf",BrowserImport.PdfPreparation("<a href='https://evil.test/stable/444'>Bad</a><a href='/stable/123'>Article</a>",new("https://www.jstor.org/action/doBasicSearch?Query=test"))?.AbsoluteUri);
+            Equal("https://pmc.ncbi.nlm.nih.gov/articles/PMC123/",BrowserImport.PdfPreparation("<a href='https://pmc.ncbi.nlm.nih.gov/articles/PMC123/'>Full text</a>",new("https://pubmed.ncbi.nlm.nih.gov/123/"))?.AbsoluteUri);
+            True(BrowserImport.PdfPreparation("",new("https://example.com/stable/123"))==null);
+        });
+        Test("Session filter, sort, bulk move and collection removal preserve unrelated records",()=>{
+            var c=new Collection{Name="Group"};var a=new Session{Name="Alpha",StartedAt=new DateTime(2020,1,1),Records=[new Record()]};var b=new Session{Name="Beta",StartedAt=new DateTime(2022,1,1),Records=[new Record(),new Record()]};var d=new Session{Name="Other"};var lib=new Library{Collections=[c],Sessions=[a,b,d]};
+            Equal(a,LibraryActions.VisibleSessions(lib,"ALP",0).Single());Equal(a,LibraryActions.VisibleSessions(lib,"",1).First());Equal(a,LibraryActions.VisibleSessions(lib,"",2).First());Equal(b,LibraryActions.VisibleSessions(lib,"",3).First());
+            LibraryActions.Move(new[]{a,b},c.Id);Equal(c.Id,a.CollectionId);True(d.CollectionId==null);
+            LibraryActions.DeleteCollection(lib,c,false);Equal(3,lib.Sessions.Count);True(a.CollectionId==null);Equal(1,a.Records.Count);
+            lib.Collections.Add(c);LibraryActions.Move(new[]{a,b},c.Id);LibraryActions.DeleteCollection(lib,c,true);Equal(d,lib.Sessions.Single());
+        });
         Test("Supported search URLs and lookalike host rejection",()=>{
             True(Sources.CanImport(new("https://www.cia.gov/readingroom/advanced-search-view?keyword=test")));
             True(Sources.CanImport(new("https://www.jstor.org/action/doBasicSearch?Query=test")));

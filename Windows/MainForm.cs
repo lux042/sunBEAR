@@ -10,6 +10,10 @@ public sealed class MainForm : Form
     readonly DataGridView grid=new(){Dock=DockStyle.Fill,ReadOnly=true,AllowUserToAddRows=false,AllowUserToDeleteRows=false,AutoGenerateColumns=false,SelectionMode=DataGridViewSelectionMode.FullRowSelect,MultiSelect=true,RowHeadersVisible=false,BackgroundColor=Color.White,BorderStyle=BorderStyle.None,AutoSizeColumnsMode=DataGridViewAutoSizeColumnsMode.Fill};
     readonly TextBox details=new(){Dock=DockStyle.Fill,Multiline=true,ReadOnly=true,ScrollBars=ScrollBars.Vertical,BorderStyle=BorderStyle.None,BackColor=Color.FromArgb(248,248,244)};
     readonly TextBox search=new(){Dock=DockStyle.Top,PlaceholderText="Filter by title, identifier, collection, or text",Height=30};
+    readonly TextBox sessionFilter=new(){Dock=DockStyle.Top,PlaceholderText="Find a saved search"};
+    readonly ComboBox sessionSort=new(){Dock=DockStyle.Top,DropDownStyle=ComboBoxStyle.DropDownList};
+    readonly Label sessionCount=new(){Dock=DockStyle.Bottom,Height=28,TextAlign=ContentAlignment.MiddleLeft,ForeColor=Color.FromArgb(91,108,101)};
+    bool refreshingTree;
     readonly ComboBox source=new(){DropDownStyle=ComboBoxStyle.DropDownList,Width=165};
     readonly TextBox url=new(){Width=570,PlaceholderText="Paste a search, topic, or NYT article URL"};
     readonly NumericUpDown pageLimit=new(){Minimum=1,Maximum=10,Value=1,Width=50};
@@ -39,7 +43,7 @@ public sealed class MainForm : Form
     public MainForm(LibraryStore store,Library library,string? smokeFolder=null,string? renderFolder=null)
     {
         this.store=store;this.library=library;
-        Text="sunBEAR 1.5.4 — Research Library";Size=new Size(1320,860);MinimumSize=new Size(1040,780);
+        Text="sunBEAR 1.6.0 — Research Library";Size=new Size(1320,860);MinimumSize=new Size(1040,780);
         StartPosition=FormStartPosition.CenterScreen;Font=new Font("Segoe UI",10);BackColor=Color.White;
         if(smokeFolder!=null || renderFolder!=null){ShowInTaskbar=false;Opacity=0;}
         Icon=Icon.ExtractAssociatedIcon(Environment.ProcessPath!);
@@ -48,7 +52,7 @@ public sealed class MainForm : Form
 
         source.Items.AddRange(Sources.Names);source.SelectedIndex=0;
         var archiveButton=Button("TimesMachine",()=>{if(browserReady && !IsRunning){tabs.SelectedTab=browserTab;browser.Navigate(new Uri("https://timesmachine.nytimes.com/browser"));}});archiveButton.Visible=false;
-        var browseButton=Button("Browse source",Browse);
+        var browseButton=Button("Browse source",Browse);source.SelectedIndexChanged+=(_,_)=>browseButton.Text=source.SelectedIndex==5?"Search New York Times":"Browse source";
         var folderButton=Button("Save location…",ChooseFolder);
         var linkRow=new FlowLayoutPanel{AutoSize=true,WrapContents=false,Margin=Padding.Empty};
         linkRow.Controls.AddRange([source,url,browseButton,start]);
@@ -67,8 +71,10 @@ public sealed class MainForm : Form
         libraryContent=split;
         var leftBar=new FlowLayoutPanel{Dock=DockStyle.Top,AutoSize=true,AutoSizeMode=AutoSizeMode.GrowAndShrink};
         leftBar.Controls.Add(Button("+ Collection",NewCollection));leftBar.Controls.Add(Button("Manage",()=>ShowTreeMenu(new Point(5,5))));
-        split.Panel1.Controls.Add(tree);split.Panel1.Controls.Add(leftBar);split.Panel1.Controls.Add(new Label{Text="COLLECTIONS",Dock=DockStyle.Top,Height=38,Padding=new Padding(10,12,0,0),ForeColor=Color.FromArgb(91,108,101),Font=new Font("Segoe UI",9,FontStyle.Bold)});
-        var recordsSplit=new SplitContainer{Size=new Size(1000,600),Dock=DockStyle.Fill,Orientation=Orientation.Horizontal,SplitterDistance=340};
+        sessionSort.Items.AddRange(["Newest first","Oldest first","Name","Most records"]);sessionSort.SelectedIndex=0;
+        sessionSort.SelectedIndexChanged+=(_,_)=>RefreshTree();sessionFilter.TextChanged+=(_,_)=>RefreshTree();
+        split.Panel1.Controls.Add(tree);split.Panel1.Controls.Add(sessionCount);split.Panel1.Controls.Add(sessionFilter);split.Panel1.Controls.Add(sessionSort);split.Panel1.Controls.Add(leftBar);split.Panel1.Controls.Add(new Label{Text="COLLECTIONS",Dock=DockStyle.Top,Height=38,Padding=new Padding(10,12,0,0),ForeColor=Color.FromArgb(91,108,101),Font=new Font("Segoe UI",9,FontStyle.Bold)});
+        var recordsSplit=new SplitContainer{Size=new Size(1000,600),Dock=DockStyle.Fill,Orientation=Orientation.Vertical,SplitterDistance=590,FixedPanel=FixedPanel.Panel2};
         recordsSplit.Panel1.Controls.Add(grid);recordsSplit.Panel1.Controls.Add(emptyLibrary);recordsSplit.Panel1.Controls.Add(search);
         recordsSplit.Panel2.Controls.Add(details);
         var recordActions=new FlowLayoutPanel{Dock=DockStyle.Bottom,AutoSize=true,AutoSizeMode=AutoSizeMode.GrowAndShrink};
@@ -84,16 +90,21 @@ public sealed class MainForm : Form
         Controls.Add(tabs);Controls.Add(importBar);Controls.Add(header);Controls.Add(status);
         foreach(var (title,property,weight) in new[]{("Title","Title",33f),("Source","Source",11f),("Collection","Collection",15f),("Identifier","Number",12f),("Date","Date",10f),("PDFs","PdfStatus",9f),("Page","PageStatus",10f)}) grid.Columns.Add(new DataGridViewTextBoxColumn{HeaderText=title,DataPropertyName=property,FillWeight=weight,SortMode=DataGridViewColumnSortMode.Automatic});
         grid.ColumnHeadersDefaultCellStyle.Font=new Font(Font,FontStyle.Bold);grid.RowTemplate.Height=32;grid.AlternatingRowsDefaultCellStyle.BackColor=Color.FromArgb(247,248,244);
-        tree.SelectionChanged+=(_,_)=>RefreshRecords();search.TextChanged+=(_,_)=>RefreshRecords();grid.SelectionChanged+=(_,_)=>{ShowDetails();UpdateSelectionCount();};grid.KeyDown+=(_,e)=>{if(e.KeyCode==Keys.Escape){grid.ClearSelection();e.SuppressKeyPress=true;}else if(e.Control && e.KeyCode==Keys.A){grid.SelectAll();e.SuppressKeyPress=true;}};grid.CellDoubleClick+=(_,_)=>OpenRecord();
+        tree.SelectionChanged+=(_,_)=>{if(!refreshingTree){RefreshRecords();sessionCount.Text=$"{tree.SelectedNodes.Count(n=>n.Tag is Session)} searches selected";}};search.TextChanged+=(_,_)=>RefreshRecords();grid.SelectionChanged+=(_,_)=>{ShowDetails();UpdateSelectionCount();};grid.KeyDown+=(_,e)=>{if(e.KeyCode==Keys.Escape){grid.ClearSelection();e.SuppressKeyPress=true;}else if(e.Control && e.KeyCode==Keys.A){grid.SelectAll();e.SuppressKeyPress=true;}};grid.CellDoubleClick+=(_,_)=>OpenRecord();
         tree.NodeMouseClick+=(_,e)=>{if(e.Button==MouseButtons.Right){tree.SelectedNode=e.Node;ShowTreeMenu(e.Location);}};
-        browser.ImportRequested+=async u=>{url.Text=u.AbsoluteUri;await StartImport();};
+        browser.ImportRequested+=async page=>{url.Text=page.Url.AbsoluteUri;await StartImport(page);};
         Shown+=async(_,_)=>{
-            if(renderFolder!=null){
+            if(renderFolder!=null){try{
 var testGroup=tree.Nodes.Add("Selection checks");
 var one=testGroup.Nodes.Add("Search one");one.Tag=new Session();var two=testGroup.Nodes.Add("Search two");two.Tag=new Session();var three=testGroup.Nodes.Add("Search three");three.Tag=new Session();testGroup.Expand();
 tree.ClickForTest(one,false,false);tree.ClickForTest(three,false,true);if(tree.SelectedNodes.Count()!=3 || SelectedSessions().Count()!=3)throw new Exception("Session range failed");
 using(var selectedView=new Bitmap(Width,Height)){DrawToBitmap(selectedView,new Rectangle(0,0,Width,Height));selectedView.Save(Path.Combine(renderFolder,"selected.png"));}
 tree.ClickForTest(two,true,false);if(tree.SelectedNodes.Count()!=2)throw new Exception("Session Ctrl toggle failed");tree.ClickForTest(two,false,false);if(tree.SelectedNodes.Count()!=1)throw new Exception("Session single selection failed");RefreshTree();
+var alpha=new Session{Name="Alpha search",Records=[new Record{Title="Alpha document"}]};var beta=new Session{Name="Beta search",Records=[new Record{Title="Beta document"}]};library.Sessions.AddRange([alpha,beta]);RefreshTree(alpha);
+var sessionNodes=tree.Nodes.Cast<TreeNode>().SelectMany(n=>n.Nodes.Cast<TreeNode>()).ToList();tree.ClickForTest(sessionNodes.Single(n=>n.Tag==alpha),false,false);tree.ClickForTest(sessionNodes.Single(n=>n.Tag==beta),true,false);
+if(grid.Rows.Count!=2)throw new Exception("Combined sessions not displayed");sessionSort.SelectedIndex=2;if(tree.SelectedNodes.Count()!=2 || grid.Rows.Count!=2)throw new Exception("Sort lost selection");
+var selectedNode=tree.SelectedNodes.First();tree.ClickForTest(selectedNode,false,false,true);if(tree.SelectedNodes.Count()!=2)throw new Exception("Right click lost bulk selection");
+sessionFilter.Text="Alpha";if(tree.Nodes.Cast<TreeNode>().SelectMany(n=>n.Nodes.Cast<TreeNode>()).Count()!=1)throw new Exception("Session filter failed");sessionFilter.Text="";library.Sessions.Remove(alpha);library.Sessions.Remove(beta);RefreshTree();
 var sample=new[]{new Record{Title="First"},new Record{Title="Second"},new Record{Title="Third"}};
 grid.DataSource=new SortableList<Record>(sample.ToList());grid.ClearSelection();grid.Rows[0].Selected=true;grid.Rows[2].Selected=true;
 if(ExportRecords().Count!=2 || ExportRecords()[1].Title!="Third" || !count.Text.Contains("2 selected"))throw new Exception("Selection scope/count incorrect");
@@ -104,7 +115,7 @@ status.Text="Downloading article page 4 of 12…";start.Enabled=false;stop.Enabl
 var waiting=RequestAccess(cancelTest.Token);if(waiting.IsCompleted || browser.Busy || !resume.Visible)throw new Exception("Access did not pause");cancelTest.Cancel();try{await waiting;throw new Exception("Pause did not cancel");}catch(OperationCanceledException){}if(accessReady!=null || resume.Visible)throw new Exception("Pause cleanup failed");
 }
 var continuing=RequestAccess(CancellationToken.None);accessReady!.TrySetResult();await continuing;if(!browser.Busy || resume.Visible)throw new Exception("Resume failed");HideLoading();
-File.WriteAllText(Path.Combine(renderFolder,"render-result.txt"),"PASS Native mouse-message session Shift range/Ctrl toggle/single selection; multi-row selection scope/count, select all and clear/visible fallback; determinate progress 3/12 = 25%; loading view restored; access pause waits, resumes, cancels and cleans up.");Close();return;}
+File.WriteAllText(Path.Combine(renderFolder,"render-result.txt"),"PASS Native mouse-message session Shift range/Ctrl toggle/single selection; multi-row selection scope/count, select all and clear/visible fallback; determinate progress 3/12 = 25%; loading view restored; access pause waits, resumes, cancels and cleans up.");Close();return;}catch(Exception e){File.WriteAllText(Path.Combine(renderFolder,"render-result.txt"),"FAIL "+e);Close();return;}}
             if(smokeFolder!=null)CaptureWindow(smokeFolder);
             try {tabs.SelectedTab=browserTab;await browser.Initialize(store.Root);tabs.SelectedTab=libraryTab;browserReady=true;status.Text="Ready — choose a source and browse, or paste a search-results URL.";if(smokeFolder!=null)await SmokeTest(smokeFolder);}
             catch(Exception e){if(smokeFolder!=null){File.WriteAllText(Path.Combine(smokeFolder,"smoke-result.txt"),"PASS Windows form initialized and rendered\nBLOCKED Browser integration test: "+e);Close();return;}status.Text="Browser unavailable. Saved records and exports remain available.";MessageBox.Show(this,"The embedded browser could not start. Ensure Microsoft Edge WebView2 Runtime is installed and sunBEAR can write to its browser profile folder.\n\nProfile: "+Path.Combine(store.Root,"Browser")+"\n\n"+e.Message,"Browser setup",MessageBoxButtons.OK,MessageBoxIcon.Information);}
@@ -112,7 +123,8 @@ File.WriteAllText(Path.Combine(renderFolder,"render-result.txt"),"PASS Native mo
         FormClosing+=(_,e)=>{if(IsRunning){cancellation?.Cancel();e.Cancel=true;status.Text="Stopping the import. Close the window again once it has stopped.";}};
         ApplyAppearance(this);StyleButton(start,true);StyleButton(resume,true);
         tabs.Padding=new Point(20,9);libraryTab.Padding=new Padding(12);browserTab.Padding=new Padding(10);
-        tree.ItemHeight=32;tree.FullRowSelect=true;tree.ShowLines=false;
+        tree.ShowNodeToolTips=true;tree.ItemHeight=32;tree.FullRowSelect=true;tree.ShowLines=false;
+        grid.AutoSizeColumnsMode=DataGridViewAutoSizeColumnsMode.None;foreach(DataGridViewColumn col in grid.Columns)col.Width=col.DataPropertyName=="Title"?260:110;
         grid.EnableHeadersVisualStyles=false;grid.ColumnHeadersHeight=38;grid.ColumnHeadersDefaultCellStyle.BackColor=Color.FromArgb(236,242,238);grid.ColumnHeadersDefaultCellStyle.ForeColor=Color.FromArgb(50,70,59);grid.ColumnHeadersDefaultCellStyle.SelectionBackColor=Color.FromArgb(236,242,238);grid.ColumnHeadersDefaultCellStyle.SelectionForeColor=Color.FromArgb(50,70,59);grid.CellBorderStyle=DataGridViewCellBorderStyle.SingleHorizontal;grid.GridColor=Color.FromArgb(234,239,236);grid.RowTemplate.Height=40;grid.DefaultCellStyle.SelectionBackColor=Color.FromArgb(233,239,234);grid.DefaultCellStyle.SelectionForeColor=Color.FromArgb(22,56,40);grid.DefaultCellStyle.Padding=new Padding(6,2,6,2);
         RefreshTree();
     }
@@ -197,17 +209,29 @@ File.WriteAllText(Path.Combine(renderFolder,"render-result.txt"),"PASS Native mo
     void Save()=>store.Save(library);
     void RefreshTree(object? selection=null)
     {
-        selection??=tree.SelectedNode?.Tag;
-        tree.BeginUpdate();tree.Nodes.Clear();
-        var all=tree.Nodes.Add("All records");all.Tag="all";
-        foreach(var c in library.Collections.OrderBy(x=>x.Name)) {var n=tree.Nodes.Add(c.Name);n.Tag=c;foreach(var s in library.Sessions.Where(s=>s.CollectionId==c.Id).OrderByDescending(s=>s.StartedAt))AddSession(n,s);n.Expand();}
-        var unfiled=tree.Nodes.Add("Unfiled");unfiled.Tag="unfiled";
-        foreach(var s in library.Sessions.Where(s=>s.CollectionId==null).OrderByDescending(s=>s.StartedAt))AddSession(unfiled,s);
-        unfiled.Expand();
-        tree.SelectedNode=tree.Nodes.Cast<TreeNode>().SelectMany(n=>new[]{n}.Concat(n.Nodes.Cast<TreeNode>())).FirstOrDefault(n=>Equals(n.Tag,selection))??all;
-        tree.EndUpdate();RefreshRecords();
+        var previous=selection!=null?new[]{selection}:tree.SelectedNodes.Select(n=>n.Tag).ToArray();
+        var expanded=tree.Nodes.Cast<TreeNode>().Where(n=>n.IsExpanded).Select(n=>n.Tag).ToHashSet();
+        bool first=tree.Nodes.Count==0;
+        refreshingTree=true;tree.BeginUpdate();
+        try{
+            tree.Nodes.Clear();var all=tree.Nodes.Add("All records");all.Tag="all";
+            var visible=LibraryActions.VisibleSessions(library,sessionFilter.Text,sessionSort.SelectedIndex).ToList();
+            foreach(var c in library.Collections.OrderBy(x=>x.Name)){
+                var n=tree.Nodes.Add(c.Name+" ("+library.Sessions.Count(s=>s.CollectionId==c.Id)+")");n.Tag=c;
+                foreach(var item in visible.Where(s=>s.CollectionId==c.Id))AddSession(n,item);
+                if(first || expanded.Contains(c) || Equals(selection,c) || sessionFilter.Text.Length>0)n.Expand();
+            }
+            var unfiled=tree.Nodes.Add("Unfiled");unfiled.Tag="unfiled";
+            foreach(var item in visible.Where(s=>s.CollectionId==null))AddSession(unfiled,item);
+            if(first || expanded.Contains("unfiled") || sessionFilter.Text.Length>0)unfiled.Expand();
+            var allNodes=tree.Nodes.Cast<TreeNode>().SelectMany(n=>new[]{n}.Concat(n.Nodes.Cast<TreeNode>())).ToList();
+            var restore=allNodes.Where(n=>previous.Contains(n.Tag)).ToList();
+            tree.RestoreSelection(restore.Count>0?restore:new[]{all});
+            if(selection is Session)tree.SelectedNode?.EnsureVisible();
+        }finally{tree.EndUpdate();refreshingTree=false;}
+        sessionCount.Text=$"{tree.SelectedNodes.Count(n=>n.Tag is Session)} searches selected";RefreshRecords();
     }
-    static void AddSession(TreeNode n,Session s){var child=n.Nodes.Add(s.Name+" ("+s.Records.Count+")"+(s.IsComplete?"":" • partial"));child.Tag=s;}
+    static void AddSession(TreeNode n,Session s){var child=n.Nodes.Add(s.Name+" ("+s.Records.Count+")"+(s.IsComplete?"":" • partial"));child.Tag=s;child.ToolTipText=$"{s.StartedAt:g} · {s.Records.Count} records · {s.PagesScraped} pages";}
     IEnumerable<Session> SelectedSessions()=>tree.SelectedNodes.SelectMany(n=>n.Tag switch {Session s=>new[]{s},Collection c=>library.Sessions.Where(s=>s.CollectionId==c.Id),"unfiled"=>library.Sessions.Where(s=>s.CollectionId==null),"all"=>library.Sessions,_=>Enumerable.Empty<Session>()}).Distinct();
     void RefreshRecords()
     {
@@ -228,13 +252,13 @@ File.WriteAllText(Path.Combine(renderFolder,"render-result.txt"),"PASS Native mo
     }
     void Browse(){try{if(!browserReady)throw new InvalidOperationException("The browser is not ready. Install WebView2 Runtime if prompted.");if(IsRunning)return;tabs.SelectedTab=browserTab;browser.Navigate(new Uri(Sources.Homes[source.SelectedIndex]));}catch(Exception e){Error(e);}}
     void ChooseFolder(){if(IsRunning)return;using var d=new FolderBrowserDialog{Description="Choose where sunBEAR will save downloaded PDFs",SelectedPath=library.DownloadFolder,UseDescriptionForTitle=true};if(d.ShowDialog(this)==DialogResult.OK){library.DownloadFolder=d.SelectedPath;try{Save();status.Text="PDFs will be saved in "+d.SelectedPath;}catch(Exception e){Error(e);}}}
-    async Task StartImport()
+    async Task StartImport(ImportPage? initialPage=null)
     {
         if(IsRunning)return;
         if(!Uri.TryCreate(url.Text.Trim(),UriKind.Absolute,out var address) || !Sources.CanImport(address)){MessageBox.Show(this,"Paste a supported search-results URL. For the New York Times, topic pages and individual article or TimesMachine article URLs also work. Open a specific archive article rather than an entire issue. You can browse inside sunBEAR and choose ‘Import this page’.","Choose a page");return;}
         if(!browserReady){MessageBox.Show(this,"The browser is not ready. Install WebView2 Runtime if prompted.");return;}
         source.SelectedIndex=Sources.Index(address);url.Text=address.AbsoluteUri;
-        var q=Sources.Query(address);var term=new[]{"keyword","Query","q","term","search","sm_field_document_number","sm_field_case_number"}.Select(k=>q.GetValueOrDefault(k,"")).FirstOrDefault(v=>v.Length>0)??(source.SelectedIndex==5?Uri.UnescapeDataString(address.Segments.Last()).Replace(".html","").Trim('/') : "Search");
+        var q=Sources.Query(address);var term=new[]{"keyword","Query","query","q","term","search","sm_field_document_number","sm_field_case_number"}.Select(k=>q.GetValueOrDefault(k,"")).FirstOrDefault(v=>v.Length>0)??(source.SelectedIndex==5?Uri.UnescapeDataString(address.Segments.Last()).Replace(".html","").Trim('/') : "Search");
         var name=Sources.SafeName(Sources.Names[source.SelectedIndex]+" - "+term)+" - "+DateTime.Now.ToString("yyyy-MM-dd HH-mm-ss");
         var session=new Session{Name=name,SearchURL=address.AbsoluteUri,CollectionId=(tree.SelectedNode?.Tag as Collection)?.Id};
         try {
@@ -242,7 +266,7 @@ File.WriteAllText(Path.Combine(renderFolder,"render-result.txt"),"PASS Native mo
             library.Sessions.Add(session);Save();RefreshTree(session);
             cancellation=new();browser.Busy=true;start.Enabled=false;stop.Enabled=true;source.Enabled=false;url.ReadOnly=true;pdf.Enabled=false;pageLimit.Enabled=false;
             ShowLoading("Importing records");
-            await new Scraper(browser,ReportProgress,RequestAccess).Run(session,pdf.Checked,(int)pageLimit.Value,s=>status.Text=s,()=>{Save();RefreshTree(session);},cancellation.Token,savePages.Checked);
+            await new Scraper(browser,ReportProgress,RequestAccess).Run(session,pdf.Checked,(int)pageLimit.Value,s=>status.Text=s,()=>{Save();RefreshTree(session);},cancellation.Token,savePages.Checked,initialPage);
         }catch(OperationCanceledException){status.Text=$"Stopped. {session.Records.Count} records saved; this import is partial.";}
         catch(Exception e){status.Text="Import stopped: "+e.Message;Error(e);}
         finally {cancellation?.Dispose();cancellation=null;browser.Busy=false;start.Enabled=true;stop.Enabled=false;source.Enabled=true;url.ReadOnly=false;pdf.Enabled=true;pageLimit.Enabled=true;HideLoading();RefreshTree(session);}
@@ -272,6 +296,7 @@ File.WriteAllText(Path.Combine(renderFolder,"render-result.txt"),"PASS Native mo
         var targets=ExportRecords().Where(r=>r.Source=="New York Times")
             .Select(r=>(Session:library.Sessions.First(s=>s.Records.Contains(r)),Record:r)).ToList();
         if(targets.Count==0){MessageBox.Show(this,"Select a session containing New York Times articles first.");return;}
+        source.SelectedIndex=5;
         var selection=tree.SelectedNode?.Tag;
         try {
             cancellation=new();browser.Busy=true;start.Enabled=false;stop.Enabled=true;source.Enabled=false;url.ReadOnly=true;pdf.Enabled=false;pageLimit.Enabled=false;ShowLoading("Downloading article pages");
@@ -284,16 +309,38 @@ File.WriteAllText(Path.Combine(renderFolder,"render-result.txt"),"PASS Native mo
     void ShowTreeMenu(Point location)
     {
         if(IsRunning)return;
-        var selected=tree.SelectedNode?.Tag;var menu=new ContextMenuStrip();
-        if(selected is Session || selected is Collection){menu.Items.Add("Rename…",null,(_,_)=>{var old=selected is Session s?s.Name:((Collection)selected).Name;var value=Prompt("Rename","Name",old);if(string.IsNullOrWhiteSpace(value))return;if(selected is Session session)session.Name=value.Trim();else ((Collection)selected).Name=value.Trim();try{Save();RefreshTree(selected);}catch(Exception e){Error(e);}});}
-        if(selected is Session session){var move=new ToolStripMenuItem("Move to collection");void AddMove(string title,string? id){move.DropDownItems.Add(title,null,(_,_)=>{session.CollectionId=id;try{Save();RefreshTree(session);}catch(Exception e){Error(e);}});}AddMove("Unfiled",null);foreach(var c in library.Collections)AddMove(c.Name,c.Id);menu.Items.Add(move);menu.Items.Add("Show download folder",null,(_,_)=>Launch(session.FolderPath));}
-        menu.Items.Add("Export each session as TSV…",null,(_,_)=>ExportSessions());
-        if(selected is Session || selected is Collection)menu.Items.Add("Delete from library…",null,(_,_)=>{
-            var message=selected is Collection?"Remove this collection? Its sessions will move to Unfiled. Downloaded files will remain on disk.":"Remove this session and its records from the library? Downloaded files will remain on disk.";
-            if(MessageBox.Show(this,message,"Delete from library",MessageBoxButtons.OKCancel,MessageBoxIcon.Question)!=DialogResult.OK)return;
-            if(selected is Session s)library.Sessions.Remove(s);else{var c=(Collection)selected;foreach(var s2 in library.Sessions.Where(x=>x.CollectionId==c.Id))s2.CollectionId=null;library.Collections.Remove(c);}try{Save();RefreshTree();}catch(Exception e){Error(e);}
-        });
+        var selected=tree.SelectedNode?.Tag;var targets=SelectedSessions().ToList();var menu=new ContextMenuStrip();
+        if(selected is Collection collection){
+            menu.Items.Add("Select contents",null,(_,_)=>tree.RestoreSelection(tree.SelectedNode!.Nodes.Cast<TreeNode>()));
+            menu.Items.Add("Rename collection…",null,(_,_)=>RenameObject(collection));
+            menu.Items.Add("Delete collection only…",null,(_,_)=>DeleteCollection(collection,false));
+            menu.Items.Add("Delete collection and contents…",null,(_,_)=>DeleteCollection(collection,true));
+            menu.Items.Add(new ToolStripSeparator());
+        }
+        if(targets.Count==1){menu.Items.Add("Rename search…",null,(_,_)=>RenameObject(targets[0]));menu.Items.Add("Show search folder",null,(_,_)=>Launch(targets[0].FolderPath));}
+        if(targets.Count>0){
+            var move=new ToolStripMenuItem($"Move {targets.Count} search(es) to");
+            void AddMove(string title,string? id){move.DropDownItems.Add(title,null,(_,_)=>{LibraryActions.Move(targets,id);Save();RefreshTree();});}
+            AddMove("Unfiled",null);foreach(var c in library.Collections)AddMove(c.Name,c.Id);
+            move.DropDownItems.Add("New collection…",null,(_,_)=>{var name=Prompt("New collection","Collection name","");if(string.IsNullOrWhiteSpace(name))return;var c=new Collection{Name=name.Trim()};library.Collections.Add(c);LibraryActions.Move(targets,c.Id);Save();RefreshTree();});
+            menu.Items.Add(move);
+            menu.Items.Add("Export each search as TSV…",null,(_,_)=>ExportSessions(targets));
+            menu.Items.Add("Send selected searches to EndNote",null,(_,_)=>SendEndNoteRecords(targets.SelectMany(s=>s.Records).ToList()));
+            menu.Items.Add("Delete selected searches from library…",null,(_,_)=>{
+                if(MessageBox.Show(this,$"Remove {targets.Count} searches and their records from the library? Downloaded files remain on disk.","Delete searches",MessageBoxButtons.OKCancel,MessageBoxIcon.Question)!=DialogResult.OK)return;
+                LibraryActions.DeleteSessions(library,targets);Save();RefreshTree();
+            });
+        }
         menu.Show(tree,location);
+    }
+    void RenameObject(object item){
+        var name=item is Session s?s.Name:((Collection)item).Name;var value=Prompt("Rename","Name",name);if(string.IsNullOrWhiteSpace(value))return;
+        if(item is Session session)session.Name=value.Trim();else ((Collection)item).Name=value.Trim();Save();RefreshTree(item);
+    }
+    void DeleteCollection(Collection collection,bool contents){
+        var message=contents?$"Remove {collection.Name} and its {library.Sessions.Count(s=>s.CollectionId==collection.Id)} searches? Downloaded files remain on disk.":$"Remove {collection.Name}? Its searches will move to Unfiled. Downloaded files remain on disk.";
+        if(MessageBox.Show(this,message,"Delete collection",MessageBoxButtons.OKCancel,MessageBoxIcon.Question)!=DialogResult.OK)return;
+        LibraryActions.DeleteCollection(library,collection,contents);Save();RefreshTree();
     }
     void Export(string extension)
     {
@@ -302,14 +349,15 @@ File.WriteAllText(Path.Combine(renderFolder,"render-result.txt"),"PASS Native mo
         if(dialog.ShowDialog(this)!=DialogResult.OK)return;
         try {File.WriteAllText(dialog.FileName,extension=="tsv"?Exports.Tsv(records):extension=="xml"?Exports.Xml(records):Exports.Enw(records),new UTF8Encoding(false));status.Text=$"Exported {records.Count} records to {dialog.FileName}";}catch(Exception e){Error(e);}
     }
-    void ExportSessions()
+    void ExportSessions(IEnumerable<Session>? sessions=null)
     {
         using var d=new FolderBrowserDialog{Description="Choose an export folder",UseDescriptionForTitle=true};if(d.ShowDialog(this)!=DialogResult.OK)return;
-        try{foreach(var s in SelectedSessions())File.WriteAllText(Sources.UniquePath(Path.Combine(d.SelectedPath,Sources.SafeName(s.Name)+".tsv")),Exports.Tsv(s.Records),new UTF8Encoding(false));status.Text="Session exports saved in "+d.SelectedPath;}catch(Exception e){Error(e);}
+        try{foreach(var s in sessions??SelectedSessions())File.WriteAllText(Sources.UniquePath(Path.Combine(d.SelectedPath,Sources.SafeName(s.Name)+".tsv")),Exports.Tsv(s.Records),new UTF8Encoding(false));status.Text="Session exports saved in "+d.SelectedPath;}catch(Exception e){Error(e);}
     }
-    void SendEndNote()
+    void SendEndNote()=>SendEndNoteRecords(ExportRecords());
+    void SendEndNoteRecords(List<Record> records)
     {
-        var records=ExportRecords();if(records.Count==0){MessageBox.Show(this,"Select a session or records first.");return;}
+        if(records.Count==0){MessageBox.Show(this,"Select a session or records first.");return;}
         try{var folder=Path.Combine(store.Root,"EndNote exports");Directory.CreateDirectory(folder);var path=Sources.UniquePath(Path.Combine(folder,"sunBEAR "+DateTime.Now.ToString("yyyy-MM-dd HH-mm-ss")+".enw"));File.WriteAllText(path,Exports.Enw(records),new UTF8Encoding(false));
             try{Process.Start(new ProcessStartInfo(path){UseShellExecute=true});status.Text="Opened the export with the Windows .enw file association. Complete the import in EndNote.";}
             catch{MessageBox.Show(this,"The export was saved, but Windows could not open it. In EndNote, use File > Import > File and choose the EndNote Import filter.\n\n"+path,"EndNote export saved");}
@@ -317,8 +365,9 @@ File.WriteAllText(Path.Combine(renderFolder,"render-result.txt"),"PASS Native mo
     }
     void OpenRecord(){if(Current is Record r && Uri.TryCreate(r.RecordURL,UriKind.Absolute,out var u) && Sources.Web(u))Launch(u.AbsoluteUri);}
     void OpenSavedPage(){if(Current is Record r && File.Exists(r.LocalPagePath))Launch(r.LocalPagePath);else MessageBox.Show(this,"No saved article page is available. Use Download article pages and check the record's page notes if it needs attention.");}
-    void OpenPdf(){if(Current is Record r){var p=r.LocalPDFPaths.FirstOrDefault(File.Exists);if(p!=null)Launch(p);else MessageBox.Show(this,"No downloaded PDF is available for this record. See its details for links and download notes.");}}
-    void OpenOnlinePdf(){if(Current is Record r && r.PdfURLs.FirstOrDefault() is string link && browserReady && !IsRunning){tabs.SelectedTab=browserTab;browser.Navigate(new Uri(link));}}
+    void OpenPdf(){if(Current is Record r){var paths=r.LocalPDFPaths.Where(File.Exists).ToList();if(paths.Count==0)MessageBox.Show(this,"No downloaded PDF is available for this record.");else ChooseFile(paths,Launch);}}
+    void ChooseFile(List<string> paths,Action<string> open){if(paths.Count==1){open(paths[0]);return;}var menu=new ContextMenuStrip();for(int i=0;i<paths.Count;i++){var path=paths[i];menu.Items.Add($"PDF {i+1}: {Path.GetFileName(path)}",null,(_,_)=>open(path));}menu.Show(Cursor.Position);}
+    void OpenOnlinePdf(){if(Current is Record r && r.PdfURLs.Count>0 && browserReady && !IsRunning)ChooseFile(r.PdfURLs,link=>{tabs.SelectedTab=browserTab;browser.Navigate(new Uri(link));});}
     void OpenFolder(){var path=Current is Record r?library.Sessions.FirstOrDefault(s=>s.Records.Contains(r))?.FolderPath:(tree.SelectedNode?.Tag as Session)?.FolderPath;if(path!=null)Launch(path);}
     void Launch(string path){try{Process.Start(new ProcessStartInfo(path){UseShellExecute=true});}catch(Exception e){Error(e);}}
     void ShowHelp()=>MessageBox.Show(this,"1. Choose a source and click Browse. Sign in if needed and run a search.\n2. Click Import this search. Choose 1–10 pages and whether to download PDFs.\n3. Organize sessions into collections using Actions.\n4. Select rows to export only those records. Clear the selection or choose a session to export all visible records.\n5. Send to EndNote opens an .enw file through Windows. For manual import, use the EndNote Import filter, or export XML and use EndNote generated XML.\n\nCIA exports preserve the original custom CIA reference type; it must be configured in your EndNote library.\n\nYour library and browser profile are stored in:\n"+store.Root+"\n\nBlocked, subscription-only, or changed website pages can require manual steps in the Browser tab.","Using sunBEAR");

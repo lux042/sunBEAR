@@ -5,6 +5,7 @@ public sealed class SessionTree : TreeView
     readonly HashSet<TreeNode> selected=new();
     TreeNode? anchor;
     bool mouseSelecting;
+    bool testingClick;
     public event EventHandler? SelectionChanged;
     public IEnumerable<TreeNode> SelectedNodes=>selected.Where(n=>n.TreeView==this);
     public SessionTree(){DrawMode=TreeViewDrawMode.OwnerDrawAll;}
@@ -27,24 +28,30 @@ public sealed class SessionTree : TreeView
     protected override void WndProc(ref Message m){
         // Handle the native mouse message before TreeView changes its single selection.
         // OnMouseDown is too late: native AfterSelect can already have reset the anchor.
-        if(m.Msg==0x0201){
+        if(m.Msg is 0x0201 or 0x0204){
             int packed=unchecked((int)m.LParam.ToInt64());
             var point=new Point((short)(packed&0xffff),(short)((packed>>16)&0xffff));
             var hit=HitTest(point);
             if(hit.Node!=null && (hit.Location&TreeViewHitTestLocations.PlusMinus)==0){
+                if(m.Msg==0x0204 && selected.Contains(hit.Node)){mouseSelecting=true;try{SelectedNode=hit.Node;}finally{mouseSelecting=false;}if(!testingClick)OnNodeMouseClick(new TreeNodeMouseClickEventArgs(hit.Node,MouseButtons.Right,1,point.X,point.Y));m.Result=IntPtr.Zero;return;}
                 var flags=m.WParam.ToInt64();
                 mouseSelecting=true;try{Focus();SelectedNode=hit.Node;}finally{mouseSelecting=false;}
                 Choose(hit.Node,(flags&0x0008)!=0,(flags&0x0004)!=0);
+                if(m.Msg==0x0204 && !testingClick)OnNodeMouseClick(new TreeNodeMouseClickEventArgs(hit.Node,MouseButtons.Right,1,point.X,point.Y));
                 m.Result=IntPtr.Zero;return;
             }
         }
         base.WndProc(ref m);
     }
-    internal void ClickForTest(TreeNode node,bool control,bool shift){
+    internal void ClickForTest(TreeNode node,bool control,bool shift,bool right=false){
         node.EnsureVisible();var bounds=node.Bounds;
         int x=bounds.Left+5,y=bounds.Top+bounds.Height/2;
-        var m=Message.Create(Handle,0x0201,new IntPtr(1|(control?8:0)|(shift?4:0)),new IntPtr((y<<16)|(x&0xffff)));
-        WndProc(ref m);
+        var m=Message.Create(Handle,right?0x0204:0x0201,new IntPtr(1|(control?8:0)|(shift?4:0)),new IntPtr((y<<16)|(x&0xffff)));
+        testingClick=true;try{WndProc(ref m);}finally{testingClick=false;}
+    }
+    public void RestoreSelection(IEnumerable<TreeNode> nodes){
+        var items=nodes.ToList();mouseSelecting=true;try{SelectedNode=items.FirstOrDefault();}finally{mouseSelecting=false;}
+        selected.Clear();foreach(var n in items)selected.Add(n);anchor=items.FirstOrDefault();Invalidate();SelectionChanged?.Invoke(this,EventArgs.Empty);
     }
     internal void Choose(TreeNode node,bool control,bool shift){
         selected.RemoveWhere(n=>n.TreeView!=this);

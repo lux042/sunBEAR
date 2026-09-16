@@ -40,7 +40,9 @@ public static class NewYorkTimesParser
     {
         var d=Parser.Parse(html);
         var root=d.DocumentNode.SelectSingleNode("//*[@data-testid='search-results']")??d.DocumentNode.SelectSingleNode("//main")??d.DocumentNode;
-        return Nodes(root,".//a[@href]").Select(n=>Resolve(u,n.GetAttributeValue("href",""))).OfType<Uri>().Where(IsArticle).Select(Canonical).Distinct().ToList();
+        var terms=Regex.Split(Sources.Query(u).GetValueOrDefault("query",Sources.Query(u).GetValueOrDefault("q",Sources.Query(u).GetValueOrDefault("search",""))).ToLowerInvariant(),@"\W+");
+        bool games=terms.Any(t=>new[]{"game","games","crossword","crosswords","puzzle","puzzles"}.Contains(t));
+        return Nodes(root,".//a[@href]").Select(n=>Resolve(u,n.GetAttributeValue("href",""))).OfType<Uri>().Where(IsArticle).Where(v=>games || !Regex.IsMatch(v.AbsolutePath,@"/(games|crosswords|puzzles)/",RegexOptions.IgnoreCase)).Select(Canonical).Distinct().ToList();
     }
     public static List<string> Pdfs(string html,Uri u)
     {

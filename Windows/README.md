@@ -1,6 +1,21 @@
-﻿# sunBEAR for Windows — 1.5.4
+# sunBEAR for Windows — 1.6.0
 
 A research library for collecting article and document metadata, saving accessible files, and exporting references to EndNote.
+
+## New in 1.6.0
+
+Windows now includes the latest Mac library and browser workflows:
+
+- Three-column library: saved searches, records, and article details.
+- Filter saved searches by name and sort by newest, oldest, name, or record count.
+- Select multiple searches with Ctrl/Shift, then use **Manage** or right-click to move, export separately, send to EndNote, or delete them together.
+- Select a collection's contents, delete just the collection (moving searches to Unfiled), or delete it with its searches. Downloaded files remain on disk.
+- Import the current rendered NYT results, including searches whose address does not contain the query. Games links are excluded unless explicitly searched for.
+- Store available NYT article text in the library even when **Save article pages** is off; that option controls the offline HTML file.
+- Browser **Reload** and **Prepare PDF downloads** for JSTOR and PubMed/PMC. Complete any site verification or download terms yourself in the embedded browser, then return to your search.
+- Choose among multiple offered or saved PDFs for a record.
+
+The existing Windows library and browser profile are reused. See [MAC-PARITY.md](MAC-PARITY.md) for the comparison baseline.
 
 ## Requirements and build
 
@@ -74,7 +89,7 @@ Live NYT subscriber article capture, updated PDF downloads and EndNote integrati
 - `BrowserPane.cs`, `Scraper.cs`: browser session, discovery and downloads.
 - `Parser.cs`, `NewYorkTimesParser.cs`: source-specific parsing.
 - `ArticlePages.cs`: rendered text capture and offline HTML.
-- `Models.cs`, `Exports.cs`: persistence and reference exports.
+- `Models.cs`, `LibraryActions.cs`, `Exports.cs`: persistence, session management and reference exports.
 - `SelfTests.cs`, `*Tests.mjs`: local validation fixtures.
 
 MIT licensed; original sunBEAR attribution is preserved in [LICENSE](LICENSE).

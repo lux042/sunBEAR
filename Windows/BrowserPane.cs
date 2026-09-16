@@ -7,18 +7,23 @@ public sealed class BrowserPane : UserControl
 {
     public WebView2 View { get; } = new() { Dock=DockStyle.Fill };
     public TextBox Address { get; } = new() { Width=650, PlaceholderText="Search or paste a web address" };
-    public event Action<Uri>? ImportRequested;
+    public event Action<ImportPage>? ImportRequested;
+    readonly Button preparePdf=new(){Text="Prepare PDF downloads",AutoSize=true,Visible=false};
+    readonly Label guidance=new(){Dock=DockStyle.Top,AutoSize=true,MaximumSize=new Size(1100,0),Padding=new Padding(8),ForeColor=Color.FromArgb(50,70,59)};
     public bool Busy { get; set; }
     readonly FlowLayoutPanel bar=new() {Dock=DockStyle.Top,AutoSize=true,AutoSizeMode=AutoSizeMode.GrowAndShrink,Padding=new Padding(4)};
     public BrowserPane()
     {
-        Controls.Add(View); Controls.Add(bar);
+        Controls.Add(View);Controls.Add(guidance); Controls.Add(bar);
         Button Add(string text,Action action) { var b=new Button {Text=text,AutoSize=true,Height=30}; b.Click+=(_,_)=>action(); bar.Controls.Add(b); return b; }
         Add("Back",()=>{if(!Busy && View.CanGoBack) View.GoBack();});
         Add("Forward",()=>{if(!Busy && View.CanGoForward) View.GoForward();});
         bar.Controls.Add(Address);
         Add("Go",Go);
-        Add("Import this page",()=>{if(!Busy && Uri.TryCreate(Address.Text,UriKind.Absolute,out var u)) ImportRequested?.Invoke(u);});
+        Add("Reload",()=>{if(!Busy)View.Reload();});
+        var import=Add("Import this page",()=>{});
+        import.Click+=async(_,_)=>{if(Busy)return;try{Busy=true;var page=await SnapshotForImport();Busy=false;ImportRequested?.Invoke(page);}catch(Exception e){Busy=false;MessageBox.Show(this,e.Message,"Import page");}};
+        preparePdf.Click+=async(_,_)=>await PreparePdf();bar.Controls.Add(preparePdf);
         Address.KeyDown+=(_,e)=>{if(e.KeyCode==Keys.Enter){Go();e.SuppressKeyPress=true;}};
     }
     void Go() { if(!Busy && Uri.TryCreate(Address.Text,UriKind.Absolute,out var u) && Sources.Web(u)) View.CoreWebView2?.Navigate(u.AbsoluteUri); }
@@ -26,7 +31,7 @@ public sealed class BrowserPane : UserControl
     {
         var environment=await CoreWebView2Environment.CreateAsync(null,Path.Combine(dataFolder,"Browser"));
         await View.EnsureCoreWebView2Async(environment);
-        View.CoreWebView2.SourceChanged+=(_,_)=>Address.Text=View.Source?.AbsoluteUri??"";
+        View.CoreWebView2.SourceChanged+=(_,_)=>{Address.Text=View.Source?.AbsoluteUri??"";preparePdf.Visible=View.Source is Uri u && (Sources.Index(u) is 1 or 3 || u.Host=="pmc.ncbi.nlm.nih.gov");};
         View.CoreWebView2.NewWindowRequested+=(_,e)=>{e.Handled=true;if(!Busy && Uri.TryCreate(e.Uri,UriKind.Absolute,out var u) && Sources.Web(u)) View.CoreWebView2.Navigate(e.Uri);};
         View.CoreWebView2.NavigationStarting+=(_,e)=>{if(!Uri.TryCreate(e.Uri,UriKind.Absolute,out var u) || (!Sources.Web(u) && e.Uri!="about:blank")) e.Cancel=true;};
     }
@@ -34,6 +39,34 @@ public sealed class BrowserPane : UserControl
     public async Task<(string Html,Uri Url)> SnapshotPage()
     {
         return (JsonSerializer.Deserialize<string>(await View.ExecuteScriptAsync("document.documentElement.outerHTML"))??"",View.Source??throw new IOException("No browser page is open."));
+    }
+    public async Task<ImportPage> SnapshotForImport()
+    {
+        var json=await View.ExecuteScriptAsync(ImportSnapshotScript);
+        using var data=JsonDocument.Parse(json);var root=data.RootElement;
+        var current=new Uri(root.GetProperty("url").GetString()!);
+        if(View.Source!=current)throw new IOException("The page changed while preparing the import. Try again once it finishes loading.");
+        return BrowserImport.Prepare(root.GetProperty("html").GetString()??"",current,root.GetProperty("query").GetString()??"");
+    }
+    internal const string ImportSnapshotScript = """
+    (()=>({url:location.href,html:document.documentElement.outerHTML,
+      query:Array.from(document.querySelectorAll('input[type="search"],input[name="query"],input[name="q"],input[aria-label*="search" i]'))
+        .filter(n=>n.getClientRects().length>0).map(n=>(n.value||'').trim()).find(Boolean)||''}))()
+    """;
+    async Task PreparePdf()
+    {
+        if(Busy)return;
+        try{
+            Busy=true;var page=await SnapshotPage();var target=BrowserImport.PdfPreparation(page.Html,page.Url);
+            if(target==null){guidance.Text="Open a JSTOR article or a PubMed record with a PMC full-text link, then choose Prepare PDF downloads.";return;}
+            if(target.Host=="pmc.ncbi.nlm.nih.gov" && !target.AbsolutePath.EndsWith(".pdf",StringComparison.OrdinalIgnoreCase)){
+                var pmc=await LoadPage(target,CancellationToken.None);target=BrowserImport.PdfPreparation(pmc.Html,pmc.Url);
+                if(target==null){guidance.Text="No PDF link is available here. Open the publisher's PDF manually if offered, then return to your search.";return;}
+            }
+            guidance.Text="Complete any verification or download terms in this browser yourself. Once the PDF is available, use Back to return to the search and import.";
+            Navigate(target);
+        }catch(Exception e){guidance.Text=e.Message;}
+        finally{Busy=false;}
     }
     public async Task<ArticleCapture> ReadArticle(CancellationToken token)
     {
@@ -57,7 +90,7 @@ public sealed class BrowserPane : UserControl
         // subscription controls. Scroll supports lists that load on demand.
         await View.ExecuteScriptAsync(ExpandNytScript);
         for(int i=0;i<20;i++) {
-            await Task.Delay(500,token);var current=await SnapshotPage();
+            await Task.Delay(500,token);var snapshot=await SnapshotForImport();var current=(Html:snapshot.Html,Url:snapshot.Url);
             if(!NewYorkTimesParser.IsSearch(current.Url))throw new IOException("NYT left the article list. Open the Browser tab and check the page.");
             if(NewYorkTimesParser.Results(current.Html,current.Url).Any(u=>!before.Contains(u.AbsoluteUri)))return current;
         }
