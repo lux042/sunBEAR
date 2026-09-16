@@ -22,7 +22,7 @@ Source websites change over time. A parser may need updating when a provider cha
 | Platform | Implementation | Getting started |
 | --- | --- | --- |
 | macOS | SwiftUI, SwiftData, and WebKit | Open [`sunBEAR/sunBEAR.xcodeproj`](sunBEAR/sunBEAR.xcodeproj) in Xcode. See the [macOS guide](Documentation/MACOS.md). |
-| Windows 10/11 x64 | C#/.NET 8 Windows Forms and WebView2 | See the [Windows guide](Windows/README.md). Current version: **1.5.4**. |
+| Windows 10/11 x64 | C#/.NET 8 Windows Forms and WebView2 | See the [Windows guide](Windows/README.md). Current version: **1.6.0**. |
 
 The two applications use native platform storage and do not share or migrate their libraries automatically.
 
@@ -51,6 +51,10 @@ xcodebuild test \
 ```
 
 For normal development, open the Xcode project, select the `sunBEAR` scheme, and run it on **My Mac**.
+
+## Windows highlights
+
+Windows 1.6.0 brings the Mac library workflows to Windows: a three-column layout, saved-search filtering and sorting, bulk session actions, rendered NYT search imports, optional offline article pages, and JSTOR/PMC PDF preparation. Ctrl/Shift selects multiple saved searches. See the [Windows guide](Windows/README.md) and [Mac feature comparison](Windows/MAC-PARITY.md).
 
 ## Build for Windows
 
