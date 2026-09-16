@@ -7,13 +7,21 @@ public sealed class SessionTree : TreeView
     bool mouseSelecting;
     public event EventHandler? SelectionChanged;
     public IEnumerable<TreeNode> SelectedNodes=>selected.Where(n=>n.TreeView==this);
-    public SessionTree(){DrawMode=TreeViewDrawMode.OwnerDrawText;}
+    public SessionTree(){DrawMode=TreeViewDrawMode.OwnerDrawAll;}
     protected override void OnDrawNode(DrawTreeNodeEventArgs e){
         if(e.Node==null)return;
         bool active=selected.Contains(e.Node);
-        using var brush=new SolidBrush(active?Color.FromArgb(218,236,224):BackColor);
-        e.Graphics.FillRectangle(brush,e.Bounds);
-        TextRenderer.DrawText(e.Graphics,e.Node.Text,Font,e.Bounds,active?Color.FromArgb(22,56,40):ForeColor,TextFormatFlags.VerticalCenter|TextFormatFlags.NoPrefix);
+        var row=new Rectangle(0,e.Bounds.Top,ClientSize.Width,e.Bounds.Height);
+        using var brush=new SolidBrush(active?Color.FromArgb(233,239,234):BackColor);
+        e.Graphics.FillRectangle(brush,row);
+        var label=e.Node.Bounds;
+        TextRenderer.DrawText(e.Graphics,e.Node.Text,Font,label,active?Color.FromArgb(38,65,50):ForeColor,TextFormatFlags.VerticalCenter|TextFormatFlags.NoPrefix);
+        if(e.Node.Nodes.Count>0){
+            var x=label.Left-12;var y=label.Top+label.Height/2;
+            using var pen=new Pen(Color.FromArgb(30,66,53),2f);
+            if(e.Node.IsExpanded){e.Graphics.DrawLine(pen,x-3,y-2,x,y+1);e.Graphics.DrawLine(pen,x,y+1,x+3,y-2);}
+            else{e.Graphics.DrawLine(pen,x-2,y-3,x+1,y);e.Graphics.DrawLine(pen,x+1,y,x-2,y+3);}
+        }
     }
     protected override void OnAfterSelect(TreeViewEventArgs e){base.OnAfterSelect(e);if(!mouseSelecting && e.Node!=null)Choose(e.Node,false,false);}
     protected override void WndProc(ref Message m){

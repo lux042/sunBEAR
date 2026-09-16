@@ -28,7 +28,7 @@ public sealed class MainForm : Form
     readonly Label loadingDetail=new(){Dock=DockStyle.Fill,TextAlign=ContentAlignment.MiddleCenter};
     readonly ProgressBar workProgress=new(){Dock=DockStyle.Fill,Margin=new Padding(90,3,90,3)};
     readonly Label progressCount=new(){Dock=DockStyle.Bottom,Height=28,TextAlign=ContentAlignment.MiddleCenter};
-    readonly Button signIn=new(){Text="NYT sign in",AutoSize=true};
+    readonly Button signIn=new(){Text="NYT sign in",AutoSize=true,Visible=false};
     readonly Button resume=new(){Text="Continue after sign-in",AutoSize=true,Visible=false};
     TaskCompletionSource? accessReady;
     readonly Label emptyLibrary=new(){Dock=DockStyle.Fill,TextAlign=ContentAlignment.MiddleCenter,ForeColor=Color.FromArgb(91,108,101),BackColor=Color.White,Text="Paste a source link above to import your first records."};
@@ -39,7 +39,7 @@ public sealed class MainForm : Form
     public MainForm(LibraryStore store,Library library,string? smokeFolder=null,string? renderFolder=null)
     {
         this.store=store;this.library=library;
-        Text="sunBEAR 1.5.2 — Research Library";Size=new Size(1320,860);MinimumSize=new Size(1040,780);
+        Text="sunBEAR 1.5.4 — Research Library";Size=new Size(1320,860);MinimumSize=new Size(1040,780);
         StartPosition=FormStartPosition.CenterScreen;Font=new Font("Segoe UI",10);BackColor=Color.White;
         if(smokeFolder!=null || renderFolder!=null){ShowInTaskbar=false;Opacity=0;}
         Icon=Icon.ExtractAssociatedIcon(Environment.ProcessPath!);
@@ -59,7 +59,7 @@ public sealed class MainForm : Form
         importBar.FlowDirection=FlowDirection.TopDown;importBar.WrapContents=false;
         importBar.Controls.AddRange([linkRow,optionsRow]);
         importBar.SizeChanged+=(_,_)=>{url.Width=Math.Max(220,importBar.ClientSize.Width-source.Width-browseButton.Width-start.Width-65);optionsRow.MaximumSize=new Size(Math.Max(400,importBar.ClientSize.Width-28),0);};
-        source.SelectedIndexChanged+=(_,_)=>{archiveButton.Visible=source.SelectedIndex==5;savePages.Visible=source.SelectedIndex==5;if(!IsRunning)url.Text="";};
+        source.SelectedIndexChanged+=(_,_)=>{archiveButton.Visible=source.SelectedIndex==5;signIn.Visible=source.SelectedIndex==5;savePages.Visible=source.SelectedIndex==5;if(!IsRunning)url.Text="";};
         signIn.Click+=(_,_)=>{if(browserReady && (!IsRunning || accessReady!=null)){tabs.SelectedTab=browserTab;browser.Navigate(new Uri("https://myaccount.nytimes.com/auth/login"));}};
         resume.Click+=(_,_)=>accessReady?.TrySetResult();
         start.Click+=async(_,_)=>await StartImport();stop.Click+=(_,_)=>cancellation?.Cancel();
@@ -92,6 +92,7 @@ public sealed class MainForm : Form
 var testGroup=tree.Nodes.Add("Selection checks");
 var one=testGroup.Nodes.Add("Search one");one.Tag=new Session();var two=testGroup.Nodes.Add("Search two");two.Tag=new Session();var three=testGroup.Nodes.Add("Search three");three.Tag=new Session();testGroup.Expand();
 tree.ClickForTest(one,false,false);tree.ClickForTest(three,false,true);if(tree.SelectedNodes.Count()!=3 || SelectedSessions().Count()!=3)throw new Exception("Session range failed");
+using(var selectedView=new Bitmap(Width,Height)){DrawToBitmap(selectedView,new Rectangle(0,0,Width,Height));selectedView.Save(Path.Combine(renderFolder,"selected.png"));}
 tree.ClickForTest(two,true,false);if(tree.SelectedNodes.Count()!=2)throw new Exception("Session Ctrl toggle failed");tree.ClickForTest(two,false,false);if(tree.SelectedNodes.Count()!=1)throw new Exception("Session single selection failed");RefreshTree();
 var sample=new[]{new Record{Title="First"},new Record{Title="Second"},new Record{Title="Third"}};
 grid.DataSource=new SortableList<Record>(sample.ToList());grid.ClearSelection();grid.Rows[0].Selected=true;grid.Rows[2].Selected=true;
@@ -112,7 +113,7 @@ File.WriteAllText(Path.Combine(renderFolder,"render-result.txt"),"PASS Native mo
         ApplyAppearance(this);StyleButton(start,true);StyleButton(resume,true);
         tabs.Padding=new Point(20,9);libraryTab.Padding=new Padding(12);browserTab.Padding=new Padding(10);
         tree.ItemHeight=32;tree.FullRowSelect=true;tree.ShowLines=false;
-        grid.EnableHeadersVisualStyles=false;grid.ColumnHeadersHeight=38;grid.ColumnHeadersDefaultCellStyle.BackColor=Color.FromArgb(236,242,238);grid.ColumnHeadersDefaultCellStyle.ForeColor=Color.FromArgb(50,70,59);grid.CellBorderStyle=DataGridViewCellBorderStyle.SingleHorizontal;grid.GridColor=Color.FromArgb(234,239,236);grid.RowTemplate.Height=40;grid.DefaultCellStyle.SelectionBackColor=Color.FromArgb(218,236,224);grid.DefaultCellStyle.SelectionForeColor=Color.FromArgb(22,56,40);grid.DefaultCellStyle.Padding=new Padding(6,2,6,2);
+        grid.EnableHeadersVisualStyles=false;grid.ColumnHeadersHeight=38;grid.ColumnHeadersDefaultCellStyle.BackColor=Color.FromArgb(236,242,238);grid.ColumnHeadersDefaultCellStyle.ForeColor=Color.FromArgb(50,70,59);grid.ColumnHeadersDefaultCellStyle.SelectionBackColor=Color.FromArgb(236,242,238);grid.ColumnHeadersDefaultCellStyle.SelectionForeColor=Color.FromArgb(50,70,59);grid.CellBorderStyle=DataGridViewCellBorderStyle.SingleHorizontal;grid.GridColor=Color.FromArgb(234,239,236);grid.RowTemplate.Height=40;grid.DefaultCellStyle.SelectionBackColor=Color.FromArgb(233,239,234);grid.DefaultCellStyle.SelectionForeColor=Color.FromArgb(22,56,40);grid.DefaultCellStyle.Padding=new Padding(6,2,6,2);
         RefreshTree();
     }
     void BuildLoadingPanel()
