@@ -6,7 +6,7 @@ public sealed class MainForm : Form
 {
     readonly LibraryStore store;
     readonly Library library;
-    readonly TreeView tree=new(){Dock=DockStyle.Fill,HideSelection=false,BorderStyle=BorderStyle.None};
+    readonly SessionTree tree=new(){Dock=DockStyle.Fill,HideSelection=false,BorderStyle=BorderStyle.None};
     readonly DataGridView grid=new(){Dock=DockStyle.Fill,ReadOnly=true,AllowUserToAddRows=false,AllowUserToDeleteRows=false,AutoGenerateColumns=false,SelectionMode=DataGridViewSelectionMode.FullRowSelect,MultiSelect=true,RowHeadersVisible=false,BackgroundColor=Color.White,BorderStyle=BorderStyle.None,AutoSizeColumnsMode=DataGridViewAutoSizeColumnsMode.Fill};
     readonly TextBox details=new(){Dock=DockStyle.Fill,Multiline=true,ReadOnly=true,ScrollBars=ScrollBars.Vertical,BorderStyle=BorderStyle.None,BackColor=Color.FromArgb(248,248,244)};
     readonly TextBox search=new(){Dock=DockStyle.Top,PlaceholderText="Filter by title, identifier, collection, or text",Height=30};
@@ -39,7 +39,7 @@ public sealed class MainForm : Form
     public MainForm(LibraryStore store,Library library,string? smokeFolder=null,string? renderFolder=null)
     {
         this.store=store;this.library=library;
-        Text="sunBEAR 1.5.0 — Research Library";Size=new Size(1320,860);MinimumSize=new Size(1040,780);
+        Text="sunBEAR 1.5.1 — Research Library";Size=new Size(1320,860);MinimumSize=new Size(1040,780);
         StartPosition=FormStartPosition.CenterScreen;Font=new Font("Segoe UI",10);BackColor=Color.White;
         if(smokeFolder!=null || renderFolder!=null){ShowInTaskbar=false;Opacity=0;}
         Icon=Icon.ExtractAssociatedIcon(Environment.ProcessPath!);
@@ -70,9 +70,6 @@ public sealed class MainForm : Form
         split.Panel1.Controls.Add(tree);split.Panel1.Controls.Add(leftBar);split.Panel1.Controls.Add(new Label{Text="COLLECTIONS",Dock=DockStyle.Top,Height=38,Padding=new Padding(10,12,0,0),ForeColor=Color.FromArgb(91,108,101),Font=new Font("Segoe UI",9,FontStyle.Bold)});
         var recordsSplit=new SplitContainer{Size=new Size(1000,600),Dock=DockStyle.Fill,Orientation=Orientation.Horizontal,SplitterDistance=340};
         recordsSplit.Panel1.Controls.Add(grid);recordsSplit.Panel1.Controls.Add(emptyLibrary);recordsSplit.Panel1.Controls.Add(search);
-        var selectionBar=new FlowLayoutPanel{Dock=DockStyle.Top,AutoSize=true,AutoSizeMode=AutoSizeMode.GrowAndShrink};
-        selectionBar.Controls.AddRange([new Label{Text="Ctrl-click: choose records   •   Shift-click: select a range",AutoSize=true,Margin=new Padding(4,12,10,4),ForeColor=Color.FromArgb(70,90,78)},Button("Select all",()=>grid.SelectAll()),Button("Clear",()=>grid.ClearSelection())]);
-        recordsSplit.Panel1.Controls.Add(selectionBar);
         recordsSplit.Panel2.Controls.Add(details);
         var recordActions=new FlowLayoutPanel{Dock=DockStyle.Bottom,AutoSize=true,AutoSizeMode=AutoSizeMode.GrowAndShrink};
         var retry=Button("Retry PDFs",()=>{});retry.Click+=async(_,_)=>await RetryPdfs();
@@ -87,11 +84,15 @@ public sealed class MainForm : Form
         Controls.Add(tabs);Controls.Add(importBar);Controls.Add(header);Controls.Add(status);
         foreach(var (title,property,weight) in new[]{("Title","Title",33f),("Source","Source",11f),("Collection","Collection",15f),("Identifier","Number",12f),("Date","Date",10f),("PDFs","PdfStatus",9f),("Page","PageStatus",10f)}) grid.Columns.Add(new DataGridViewTextBoxColumn{HeaderText=title,DataPropertyName=property,FillWeight=weight,SortMode=DataGridViewColumnSortMode.Automatic});
         grid.ColumnHeadersDefaultCellStyle.Font=new Font(Font,FontStyle.Bold);grid.RowTemplate.Height=32;grid.AlternatingRowsDefaultCellStyle.BackColor=Color.FromArgb(247,248,244);
-        tree.AfterSelect+=(_,_)=>RefreshRecords();search.TextChanged+=(_,_)=>RefreshRecords();grid.SelectionChanged+=(_,_)=>{ShowDetails();UpdateSelectionCount();};grid.KeyDown+=(_,e)=>{if(e.KeyCode==Keys.Escape){grid.ClearSelection();e.SuppressKeyPress=true;}else if(e.Control && e.KeyCode==Keys.A){grid.SelectAll();e.SuppressKeyPress=true;}};grid.CellDoubleClick+=(_,_)=>OpenRecord();
+        tree.SelectionChanged+=(_,_)=>RefreshRecords();search.TextChanged+=(_,_)=>RefreshRecords();grid.SelectionChanged+=(_,_)=>{ShowDetails();UpdateSelectionCount();};grid.KeyDown+=(_,e)=>{if(e.KeyCode==Keys.Escape){grid.ClearSelection();e.SuppressKeyPress=true;}else if(e.Control && e.KeyCode==Keys.A){grid.SelectAll();e.SuppressKeyPress=true;}};grid.CellDoubleClick+=(_,_)=>OpenRecord();
         tree.NodeMouseClick+=(_,e)=>{if(e.Button==MouseButtons.Right){tree.SelectedNode=e.Node;ShowTreeMenu(e.Location);}};
         browser.ImportRequested+=async u=>{url.Text=u.AbsoluteUri;await StartImport();};
         Shown+=async(_,_)=>{
             if(renderFolder!=null){
+var testGroup=tree.Nodes.Add("Selection checks");
+var one=testGroup.Nodes.Add("Search one");one.Tag=new Session();var two=testGroup.Nodes.Add("Search two");two.Tag=new Session();var three=testGroup.Nodes.Add("Search three");three.Tag=new Session();testGroup.Expand();
+tree.Choose(one,false,false);tree.Choose(three,false,true);if(tree.SelectedNodes.Count()!=3 || SelectedSessions().Count()!=3)throw new Exception("Session range failed");
+tree.Choose(two,true,false);if(tree.SelectedNodes.Count()!=2)throw new Exception("Session Ctrl toggle failed");tree.Choose(two,false,false);if(tree.SelectedNodes.Count()!=1)throw new Exception("Session single selection failed");RefreshTree();
 var sample=new[]{new Record{Title="First"},new Record{Title="Second"},new Record{Title="Third"}};
 grid.DataSource=new SortableList<Record>(sample.ToList());grid.ClearSelection();grid.Rows[0].Selected=true;grid.Rows[2].Selected=true;
 if(ExportRecords().Count!=2 || ExportRecords()[1].Title!="Third" || !count.Text.Contains("2 selected"))throw new Exception("Selection scope/count incorrect");
@@ -102,7 +103,7 @@ status.Text="Downloading article page 4 of 12…";start.Enabled=false;stop.Enabl
 var waiting=RequestAccess(cancelTest.Token);if(waiting.IsCompleted || browser.Busy || !resume.Visible)throw new Exception("Access did not pause");cancelTest.Cancel();try{await waiting;throw new Exception("Pause did not cancel");}catch(OperationCanceledException){}if(accessReady!=null || resume.Visible)throw new Exception("Pause cleanup failed");
 }
 var continuing=RequestAccess(CancellationToken.None);accessReady!.TrySetResult();await continuing;if(!browser.Busy || resume.Visible)throw new Exception("Resume failed");HideLoading();
-File.WriteAllText(Path.Combine(renderFolder,"render-result.txt"),"PASS Multi-row selection scope/count, select all and clear/visible fallback; determinate progress 3/12 = 25%; loading view restored; access pause waits, resumes, cancels and cleans up.");Close();return;}
+File.WriteAllText(Path.Combine(renderFolder,"render-result.txt"),"PASS Session Shift range/Ctrl toggle/single selection; multi-row selection scope/count, select all and clear/visible fallback; determinate progress 3/12 = 25%; loading view restored; access pause waits, resumes, cancels and cleans up.");Close();return;}
             if(smokeFolder!=null)CaptureWindow(smokeFolder);
             try {tabs.SelectedTab=browserTab;await browser.Initialize(store.Root);tabs.SelectedTab=libraryTab;browserReady=true;status.Text="Ready — choose a source and browse, or paste a search-results URL.";if(smokeFolder!=null)await SmokeTest(smokeFolder);}
             catch(Exception e){if(smokeFolder!=null){File.WriteAllText(Path.Combine(smokeFolder,"smoke-result.txt"),"PASS Windows form initialized and rendered\nBLOCKED Browser integration test: "+e);Close();return;}status.Text="Browser unavailable. Saved records and exports remain available.";MessageBox.Show(this,"The embedded browser could not start. Ensure Microsoft Edge WebView2 Runtime is installed and sunBEAR can write to its browser profile folder.\n\nProfile: "+Path.Combine(store.Root,"Browser")+"\n\n"+e.Message,"Browser setup",MessageBoxButtons.OK,MessageBoxIcon.Information);}
@@ -206,14 +207,14 @@ File.WriteAllText(Path.Combine(renderFolder,"render-result.txt"),"PASS Multi-row
         tree.EndUpdate();RefreshRecords();
     }
     static void AddSession(TreeNode n,Session s){var child=n.Nodes.Add(s.Name+" ("+s.Records.Count+")"+(s.IsComplete?"":" • partial"));child.Tag=s;}
-    IEnumerable<Session> SelectedSessions()=>tree.SelectedNode?.Tag switch {Session s=>[s],Collection c=>library.Sessions.Where(s=>s.CollectionId==c.Id),"unfiled"=>library.Sessions.Where(s=>s.CollectionId==null),_=>library.Sessions};
+    IEnumerable<Session> SelectedSessions()=>tree.SelectedNodes.SelectMany(n=>n.Tag switch {Session s=>new[]{s},Collection c=>library.Sessions.Where(s=>s.CollectionId==c.Id),"unfiled"=>library.Sessions.Where(s=>s.CollectionId==null),"all"=>library.Sessions,_=>Enumerable.Empty<Session>()}).Distinct();
     void RefreshRecords()
     {
         var filter=search.Text.Trim();
         var records=SelectedSessions().SelectMany(s=>s.Records).Where(r=>filter.Length==0 || (r.Title+" "+r.Number+" "+r.Collection+" "+r.Body+" "+r.FullText+" "+string.Join(" ",r.Authors)).Contains(filter,StringComparison.OrdinalIgnoreCase)).ToList();
         grid.DataSource=new SortableList<Record>(records);emptyLibrary.Visible=records.Count==0;emptyLibrary.Text=filter.Length>0?"No matching records\n\nTry a different title, identifier, or keyword.":"Paste a source link above to import your first records.";grid.ClearSelection();details.Text="Select a record to see its metadata, abstract, links, and download status.";UpdateSelectionCount();
     }
-    void UpdateSelectionCount(){count.Text=$"{grid.Rows.Count} records · {grid.SelectedRows.Count} selected";if(grid.SelectedRows.Count==0)details.Text="Select records with Ctrl-click or Shift-click. Downloads and exports use the selection; with no selection, they use all visible records.";}
+    void UpdateSelectionCount(){count.Text=$"{grid.Rows.Count} records · {grid.SelectedRows.Count} selected";if(grid.SelectedRows.Count==0)details.Text="Select a record to view its details.";}
     Record? Current=>grid.SelectedRows.Cast<DataGridViewRow>().FirstOrDefault()?.DataBoundItem as Record;
     List<Record> ExportRecords()=>grid.SelectedRows.Count>0?grid.SelectedRows.Cast<DataGridViewRow>().OrderBy(r=>r.Index).Select(r=>(Record)r.DataBoundItem).ToList():grid.Rows.Cast<DataGridViewRow>().Select(r=>(Record)r.DataBoundItem).ToList();
     void ShowDetails()
