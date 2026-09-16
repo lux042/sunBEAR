@@ -80,7 +80,7 @@ struct ContentView: View {
                 library
                     .navigationSplitViewColumnWidth(min: 480, ideal: 690)
             } detail: {
-                if let item = selectedItem { DocumentDetailView(item: item) }
+                if let item = selectedItem { DocumentDetailView(item: item, securityScopedRoot: downloadFolder) }
                 else { ContentUnavailableView("Select a record", systemImage: "doc.text.magnifyingglass") }
             }
             .tint(forestGreen)
@@ -654,6 +654,8 @@ private enum SessionSort: String, CaseIterable, Identifiable {
 
 private struct DocumentDetailView: View {
     let item: Item
+    let securityScopedRoot: URL?
+    @State private var openError = ""
 
     var body: some View {
         ScrollView {
@@ -669,10 +671,13 @@ private struct DocumentDetailView: View {
                     row("Release decision", item.releaseDecision)
                 }
                 Divider()
-                Link("Open \(ScrapeSource.source(for: URL(string: item.recordURL)!)?.title ?? "source") record", destination: URL(string: item.recordURL)!)
+                Button("Open \(sourceTitle) record") { openWebRecord() }
+                    .buttonStyle(.link)
                 ForEach(Array(item.localPDFPaths.enumerated()), id: \.offset) { index, path in
-                    Link("Open downloaded PDF \(index + 1)", destination: URL(fileURLWithPath: path))
+                    Button("Open downloaded PDF \(index + 1)") { openLocalFile(path) }
+                        .buttonStyle(.link)
                 }
+                if !openError.isEmpty { Text(openError).foregroundStyle(.orange) }
                 if !item.downloadError.isEmpty { Text(item.downloadError).foregroundStyle(.orange) }
                 if !item.articlePageError.isEmpty { Text("Article page: \(item.articlePageError)").foregroundStyle(.orange) }
                 Text("Abstract").font(.headline)
@@ -687,6 +692,34 @@ private struct DocumentDetailView: View {
         if !value.isEmpty {
             GridRow { Text(label).foregroundStyle(.secondary); Text(value).textSelection(.enabled) }
         }
+    }
+
+    private var sourceTitle: String {
+        guard let url = URL(string: item.recordURL) else { return "source" }
+        return ScrapeSource.source(for: url)?.title ?? "source"
+    }
+
+    private func openWebRecord() {
+        guard let url = URL(string: item.recordURL), NSWorkspace.shared.open(url) else {
+            openError = "The source record could not be opened."
+            return
+        }
+        openError = ""
+    }
+
+    private func openLocalFile(_ path: String) {
+        let url = URL(fileURLWithPath: path)
+        let hasAccess = securityScopedRoot?.startAccessingSecurityScopedResource() ?? false
+        defer { if hasAccess { securityScopedRoot?.stopAccessingSecurityScopedResource() } }
+        guard FileManager.default.fileExists(atPath: path) else {
+            openError = "The downloaded file is no longer at \(path)."
+            return
+        }
+        guard NSWorkspace.shared.open(url) else {
+            openError = "macOS could not open \(url.lastPathComponent)."
+            return
+        }
+        openError = ""
     }
 }
 
