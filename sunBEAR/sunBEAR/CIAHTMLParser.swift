@@ -5,6 +5,7 @@ struct ScrapedDocument: Sendable {
     var fields: [String: String] = [:]
     var recordURL: URL
     var pdfURLs: [URL] = []
+    var externalURLs: [URL] = []
     var body = ""
 }
 

@@ -396,6 +396,7 @@ struct ContentView: View {
         switch selectedSource {
         case .nyt: "Search New York Times"
         case .jstor: "Search JSTOR"
+        case .eric: "Search ERIC"
         default: "Browse source"
         }
     }
@@ -681,6 +682,10 @@ private struct DocumentDetailView: View {
                 Divider()
                 Button("Open \(sourceTitle) record") { openWebRecord() }
                     .buttonStyle(.link)
+                ForEach(Array(item.externalURLs.enumerated()), id: \.offset) { index, value in
+                    Button(externalLinkTitle(value, index: index)) { openExternalLink(value) }
+                        .buttonStyle(.link)
+                }
                 ForEach(Array(item.localPDFPaths.enumerated()), id: \.offset) { index, path in
                     Button("Open downloaded PDF \(index + 1)") { openLocalFile(path) }
                         .buttonStyle(.link)
@@ -710,6 +715,21 @@ private struct DocumentDetailView: View {
     private func openWebRecord() {
         guard let url = URL(string: item.recordURL), NSWorkspace.shared.open(url) else {
             openError = "The source record could not be opened."
+            return
+        }
+        openError = ""
+    }
+
+    private func externalLinkTitle(_ value: String, index: Int) -> String {
+        guard let host = URL(string: value)?.host?.replacingOccurrences(of: "www.", with: "") else {
+            return "Open external resource \(index + 1)"
+        }
+        return host == "doi.org" ? "Open DOI" : "Open full text at \(host)"
+    }
+
+    private func openExternalLink(_ value: String) {
+        guard let url = URL(string: value), NSWorkspace.shared.open(url) else {
+            openError = "The external resource could not be opened."
             return
         }
         openError = ""

@@ -18,6 +18,7 @@ final class Item {
     var caseNumber: String
     var recordURL: String
     var pdfURLs: [String]
+    var externalURLs: [String] = []
     var body: String
     var localPDFPaths: [String]
     var downloadError: String
@@ -42,6 +43,7 @@ final class Item {
         caseNumber: String = "",
         recordURL: String,
         pdfURLs: [String] = [],
+        externalURLs: [String] = [],
         body: String = "",
         localPDFPaths: [String] = [],
         downloadError: String = "",
@@ -65,6 +67,7 @@ final class Item {
         self.caseNumber = caseNumber
         self.recordURL = recordURL
         self.pdfURLs = pdfURLs
+        self.externalURLs = externalURLs
         self.body = body
         self.localPDFPaths = localPDFPaths
         self.downloadError = downloadError

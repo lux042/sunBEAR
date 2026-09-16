@@ -34,15 +34,66 @@ enum ERICHTMLParser {
         result.fields["Document Type"] = labeled("Record Type", in: html) ?? "ERIC Record"
         result.fields["Collection"] = meta("citation_journal_title", in: html) ?? "ERIC"
         result.fields["Document Number (FOIA) /ESDN (CREST)"] = identifier
-        result.fields["Publication Date"] = meta("citation_publication_date", in: html) ?? labeled("Publication Date", in: html) ?? ""
+        let publicationDate = meta("citation_publication_date", in: html) ?? labeled("Publication Date", in: html) ?? ""
+        result.fields["Publication Date"] = readablePublicationDate(publicationDate)
         result.fields["Document Page Count"] = labeled("Pages", in: html) ?? ""
         result.fields["Content Type"] = "ERIC"
         result.body = plainText(meta("citation_abstract", in: html) ?? meta("description", in: html) ?? "")
         result.pdfURLs = captures(#"(?is)(?:href|content)\s*=\s*[\"']([^\"']+\.pdf(?:\?[^\"']*)?)[\"']"#, in: html)
             .compactMap { URL(string: decode($0), relativeTo: url)?.absoluteURL }
             .filter { $0.host?.lowercased() == "files.eric.ed.gov" }
+            .map { pdfURL in
+                var components = URLComponents(url: pdfURL, resolvingAgainstBaseURL: false)
+                components?.scheme = "https"
+                return components?.url ?? pdfURL
+            }
             .uniqued()
+        result.externalURLs = externalResourceLinks(in: html, baseURL: url)
         return result
+    }
+
+    private static func externalResourceLinks(in html: String, baseURL: URL) -> [URL] {
+        guard let regex = try? NSRegularExpression(
+            pattern: #"(?is)<a([^>]*)href\s*=\s*[\"']([^\"']+)[\"']([^>]*)>(.*?)</a>"#
+        ) else { return [] }
+        let ns = html as NSString
+        return regex.matches(in: html, range: NSRange(location: 0, length: ns.length)).compactMap { match in
+            guard match.numberOfRanges == 5 else { return nil }
+            let attributes = ns.substring(with: match.range(at: 1)) + " " + ns.substring(with: match.range(at: 3))
+            let href = decode(ns.substring(with: match.range(at: 2)))
+            let label = plainText(ns.substring(with: match.range(at: 4)))
+            let hint = (attributes + " " + label).lowercased()
+            guard let link = URL(string: href, relativeTo: baseURL)?.absoluteURL,
+                  ["http", "https"].contains(link.scheme?.lowercased() ?? ""),
+                  link.host?.lowercased().hasSuffix("eric.ed.gov") != true else { return nil }
+            let host = link.host?.lowercased() ?? ""
+            let isRelevant = host == "doi.org"
+                || hint.range(of: #"full\s*text|publisher|available\s+from|external\s+link|institutional\s+repository|view\s+article|view\s+record|doi"#, options: .regularExpression) != nil
+            guard isRelevant,
+                  !["facebook.com", "twitter.com", "x.com", "linkedin.com"].contains(where: { host == $0 || host.hasSuffix(".\($0)") }) else { return nil }
+            return link
+        }.uniqued()
+    }
+
+    private static func readablePublicationDate(_ value: String) -> String {
+        let parts = value.split(whereSeparator: { $0 == "/" || $0 == "-" }).map(String.init)
+        guard parts.count == 3,
+              let year = Int(parts[0]),
+              let month = Int(parts[1]),
+              let day = Int(parts[2]),
+              (1...12).contains(month) || month == 0 else { return value }
+
+        if month == 0 { return String(year) }
+        let monthName = Calendar.current.monthSymbols[month - 1]
+        if day == 0 { return "\(monthName) \(year)" }
+
+        var components = DateComponents()
+        components.calendar = Calendar(identifier: .gregorian)
+        components.year = year
+        components.month = month
+        components.day = day
+        guard let date = components.date else { return value }
+        return date.formatted(.dateTime.month(.wide).day().year())
     }
 
     private static func meta(_ name: String, in html: String) -> String? {

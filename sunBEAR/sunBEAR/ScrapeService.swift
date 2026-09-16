@@ -214,7 +214,7 @@ final class ScrapeService {
 
     private func makeItem(_ value: ScrapedDocument) -> Item {
         let f = value.fields
-        return Item(title: value.title, documentType: f["Document Type"] ?? "", collection: f["Collection"] ?? "", documentNumber: f["Document Number (FOIA) /ESDN (CREST)"] ?? "", releaseDecision: f["Release Decision"] ?? "", originalClassification: f["Original Classification"] ?? "", pageCount: Int(f["Document Page Count"] ?? "") ?? 0, documentCreationDate: f["Document Creation Date"] ?? "", documentReleaseDate: f["Document Release Date"] ?? "", sequenceNumber: f["Sequence Number"] ?? "", publicationDate: f["Publication Date"] ?? "", contentType: f["Content Type"] ?? "", caseNumber: f["Case Number"] ?? "", recordURL: value.recordURL.absoluteString, pdfURLs: value.pdfURLs.map(\.absoluteString), body: value.body)
+        return Item(title: value.title, documentType: f["Document Type"] ?? "", collection: f["Collection"] ?? "", documentNumber: f["Document Number (FOIA) /ESDN (CREST)"] ?? "", releaseDecision: f["Release Decision"] ?? "", originalClassification: f["Original Classification"] ?? "", pageCount: Int(f["Document Page Count"] ?? "") ?? 0, documentCreationDate: f["Document Creation Date"] ?? "", documentReleaseDate: f["Document Release Date"] ?? "", sequenceNumber: f["Sequence Number"] ?? "", publicationDate: f["Publication Date"] ?? "", contentType: f["Content Type"] ?? "", caseNumber: f["Case Number"] ?? "", recordURL: value.recordURL.absoluteString, pdfURLs: value.pdfURLs.map(\.absoluteString), externalURLs: value.externalURLs.map(\.absoluteString), body: value.body)
     }
 
     private func safeName(_ value: String) -> String {

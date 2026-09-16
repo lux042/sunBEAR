@@ -167,8 +167,10 @@ final class sunBEARTests: XCTestCase {
         <meta name="citation_title" content="A Practitioner&apos;s Conceptualization of Student Engagement." />
         <meta name="citation_abstract" content="A concise study abstract." />
         <meta name="citation_journal_title" content="Advocate" />
-        <meta name="citation_publication_date" content="2024/00/00" />
+        <meta name="citation_publication_date" content="2024/08/00" />
         <meta name="citation_pdf_url" content="http://files.eric.ed.gov/fulltext/EJ1458636.pdf" />
+        <a class="full-text" href="https://doi.org/10.1234/example">View Full Text at Publisher</a>
+        <a href="https://twitter.com/example">Share</a>
         <div><strong>ERIC Number:</strong> EJ1458636</div>
         <div><strong>Record Type:</strong> Journal</div>
         <div><strong>Pages:</strong> 11</div>
@@ -180,9 +182,10 @@ final class sunBEARTests: XCTestCase {
         XCTAssertEqual(document.fields["Collection"], "Advocate")
         XCTAssertEqual(document.fields["Document Number (FOIA) /ESDN (CREST)"], "EJ1458636")
         XCTAssertEqual(document.fields["Document Page Count"], "11")
-        XCTAssertEqual(document.fields["Publication Date"], "2024/00/00")
+        XCTAssertEqual(document.fields["Publication Date"], "August 2024")
         XCTAssertEqual(document.body, "A concise study abstract.")
-        XCTAssertEqual(document.pdfURLs.map(\.absoluteString), ["http://files.eric.ed.gov/fulltext/EJ1458636.pdf"])
+        XCTAssertEqual(document.pdfURLs.map(\.absoluteString), ["https://files.eric.ed.gov/fulltext/EJ1458636.pdf"])
+        XCTAssertEqual(document.externalURLs.map(\.absoluteString), ["https://doi.org/10.1234/example"])
     }
 
     func testERICScrapeFolderUsesSearchAndTimestamp() throws {

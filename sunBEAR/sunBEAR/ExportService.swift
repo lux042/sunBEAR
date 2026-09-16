@@ -33,7 +33,7 @@ enum ExportService {
     static func endNoteXML(items: [Item]) -> String {
         let records = items.map { item in
             let reference = endNoteReference(for: item)
-            let relatedURLs = (item.pdfURLs + [item.recordURL]).filter { !$0.isEmpty }.map {
+            let relatedURLs = (item.pdfURLs + item.externalURLs + [item.recordURL]).filter { !$0.isEmpty }.map {
                 "<url>\(xmlStyle($0))</url>"
             }.joined()
             let attachments = item.localPDFPaths.filter { !$0.isEmpty }.map {
@@ -68,6 +68,7 @@ enum ExportService {
             // metadata pages sometimes redirect to the Reading Room homepage,
             // so prefer the stable direct PDF while retaining the record page.
             for url in item.pdfURLs { appendTagged("%U", value: url, to: &fields) }
+            for url in item.externalURLs { appendTagged("%U", value: url, to: &fields) }
             appendTagged("%U", value: item.recordURL, to: &fields)
             appendTagged("%X", value: item.body, to: &fields)
             for path in item.localPDFPaths { appendTagged("%>", value: path, to: &fields) }
