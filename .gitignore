@@ -47,3 +47,24 @@ ScrapeResults/
 # Logs
 *.log
 Logs/
+
+# Windows build output and editor state
+bin/
+obj/
+publish/
+.vs/
+*.user
+
+# Generated distribution and packaging output
+/dist/
+/dmg-stage/
+*.app/
+*.dmg
+/sunBEAR*.zip
+
+# Local research libraries and browser profiles
+*.enl
+*.Data/
+library.json
+library.json.bak
+Browser/
