@@ -289,6 +289,57 @@ final class sunBEARTests: XCTestCase {
         XCTAssertEqual(ScrapeFolderNaming.folderName(for: url, date: date), "National Archives - constitution - 2026-07-21 09-37-02")
     }
 
+    func testEBSCOResultLinksPaginationAndSearchRecognition() throws {
+        let base = try XCTUnwrap(URL(string: "https://research.ebsco.com/c/yl56xb/search/results?q=ecuador&p=1"))
+        let html = """
+        <a href="/c/yl56xb/search/details/abc123?db=a9h">First result</a>
+        <a href="https://research.ebsco.com/c/yl56xb/viewer/details/def456#record">Second result</a>
+        <button aria-label="Next page">Next</button>
+        """
+        XCTAssertTrue(ScrapeSource.ebsco.canImport(base))
+        XCTAssertEqual(EBSCOHTMLParser.resultLinks(in: html, baseURL: base).map(\.absoluteString), [
+            "https://research.ebsco.com/c/yl56xb/search/details/abc123?db=a9h",
+            "https://research.ebsco.com/c/yl56xb/viewer/details/def456"
+        ])
+        XCTAssertEqual(EBSCOHTMLParser.nextPage(in: html, baseURL: base)?.absoluteString, "https://research.ebsco.com/c/yl56xb/search/results?q=ecuador&p=2")
+    }
+
+    func testEBSCOMetadataAndFullTextLinks() throws {
+        let url = try XCTUnwrap(URL(string: "https://research.ebsco.com/c/yl56xb/search/details/abc123?an=12345678"))
+        let html = """
+        <meta name="citation_title" content="Ecuador and Regional Change" />
+        <meta name="citation_journal_title" content="Latin American Research Review" />
+        <meta name="citation_publication_date" content="20240803" />
+        <meta name="citation_firstpage" content="10" />
+        <meta name="citation_lastpage" content="24" />
+        <meta name="description" content="Additional information" />
+        <h2>Abstract</h2><div>A study of social change in Ecuador.</div>
+        <a href="/c/yl56xb/download/options">Download</a>
+        <a href="/c/yl56xb/pdfviewer/pdfviewer?vid=0&amp;sid=abc">PDF Full Text</a>
+        <a href="/c/yl56xb/online-full-text/abc123">Access now (Online full text)</a>
+        <a href="https://doi.org/10.1234/ecuador">Full text from publisher</a>
+        <a href="https://legal.ebsco.com/privacy-policy">Privacy policy</a>
+        """
+        let document = EBSCOHTMLParser.document(from: html, url: url)
+        XCTAssertEqual(document.title, "Ecuador and Regional Change")
+        XCTAssertEqual(document.fields["Collection"], "Latin American Research Review")
+        XCTAssertEqual(document.fields["Document Number (FOIA) /ESDN (CREST)"], "12345678")
+        XCTAssertEqual(document.fields["Publication Date"], "August 3, 2024")
+        XCTAssertEqual(document.fields["Document Page Count"], "15")
+        XCTAssertEqual(document.body, "A study of social change in Ecuador.")
+        XCTAssertEqual(document.pdfURLs.count, 1)
+        XCTAssertEqual(document.externalURLs.map(\.absoluteString), [
+            "https://research.ebsco.com/c/yl56xb/online-full-text/abc123",
+            "https://doi.org/10.1234/ecuador"
+        ])
+    }
+
+    func testEBSCOScrapeFolderUsesSearchAndTimestamp() throws {
+        let url = try XCTUnwrap(URL(string: "https://research.ebsco.com/c/yl56xb/search/results?q=ecuador&p=1"))
+        let date = try XCTUnwrap(Calendar(identifier: .gregorian).date(from: DateComponents(timeZone: TimeZone(secondsFromGMT: 0), year: 2026, month: 7, day: 21, hour: 14, minute: 37, second: 2)))
+        XCTAssertEqual(ScrapeFolderNaming.folderName(for: url, date: date), "EBSCO - ecuador - 2026-07-21 09-37-02")
+    }
+
     func testDocumentMetadataAndAllPDFs() throws {
         let url = try XCTUnwrap(URL(string: "https://www.cia.gov/readingroom/document/test"))
         let html = """

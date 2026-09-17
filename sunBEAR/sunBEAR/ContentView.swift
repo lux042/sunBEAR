@@ -3,6 +3,11 @@ import SwiftData
 import UniformTypeIdentifiers
 import AppKit
 
+private enum FileImporterMode {
+    case saveLocation
+    case archivalPDFs
+}
+
 struct ContentView: View {
     private let forestGreen = Color(red: 30 / 255, green: 66 / 255, blue: 53 / 255)
     private let actionGreen = Color(red: 38 / 255, green: 100 / 255, blue: 70 / 255)
@@ -16,7 +21,9 @@ struct ContentView: View {
     @State private var selectedSource = ScrapeSource.cia
     @State private var searchURL = "https://www.cia.gov/readingroom/search/site"
     @State private var downloadFolder: URL?
-    @State private var choosingFolder = false
+    @State private var fileImporterMode = FileImporterMode.archivalPDFs
+    @State private var fileImporterPresented = false
+    @State private var pendingArchivalPDFURLs: [URL] = []
     @State private var showingSearchBrowser = false
     @State private var browserURLOverride: URL?
     @State private var shouldDownloadPDFs = true
@@ -85,14 +92,47 @@ struct ContentView: View {
             }
             .tint(forestGreen)
         }
-        .fileImporter(isPresented: $choosingFolder, allowedContentTypes: [.folder]) { result in
-            if case .success(let url) = result { downloadFolder = url }
+        .fileImporter(
+            isPresented: $fileImporterPresented,
+            allowedContentTypes: fileImporterMode == .archivalPDFs ? [.pdf] : [.folder],
+            allowsMultipleSelection: fileImporterMode == .archivalPDFs
+        ) { result in
+            let completedMode = fileImporterMode
+            switch (completedMode, result) {
+            case (.saveLocation, .success(let urls)):
+                guard let url = urls.first else { return }
+                downloadFolder = url
+                if !pendingArchivalPDFURLs.isEmpty {
+                    let pdfs = pendingArchivalPDFURLs
+                    pendingArchivalPDFURLs = []
+                    Task { @MainActor in
+                        try? await Task.sleep(for: .milliseconds(250))
+                        importArchivalPDFs(pdfs)
+                    }
+                }
+            case (.archivalPDFs, .success(let urls)):
+                if downloadFolder == nil {
+                    pendingArchivalPDFURLs = urls
+                    Task { @MainActor in
+                        try? await Task.sleep(for: .milliseconds(250))
+                        fileImporterMode = .saveLocation
+                        fileImporterPresented = true
+                    }
+                } else {
+                    importArchivalPDFs(urls)
+                }
+            case (_, .failure(let error)):
+                pendingArchivalPDFURLs = []
+                scraper.status = "File selection failed: \(error.localizedDescription)"
+            default:
+                pendingArchivalPDFURLs = []
+            }
         }
         .sheet(isPresented: $showingSearchBrowser) {
             SearchBrowser(webView: browserSession.webView, source: selectedSource, initialURL: browserURLOverride ?? browserInitialURL, pageCount: requestedPageCount) { url, renderedHTML in
                 searchURL = url.absoluteString
                 if let folder = downloadFolder {
-                    if let session = scraper.start(searchURL: url, destination: folder, shouldDownloadPDFs: selectedSource != .nyt && shouldDownloadPDFs, saveArticlePages: selectedSource == .nyt && shouldSaveArticlePages, pageLimit: requestedPageCount, renderedSearchHTML: renderedHTML, authenticatedWebView: [.nyt, .jstor].contains(selectedSource) ? browserSession.webView : nil, context: modelContext) {
+                    if let session = scraper.start(searchURL: url, destination: folder, shouldDownloadPDFs: selectedSource != .nyt && shouldDownloadPDFs, saveArticlePages: selectedSource == .nyt && shouldSaveArticlePages, pageLimit: requestedPageCount, renderedSearchHTML: renderedHTML, authenticatedWebView: [.nyt, .jstor, .ebsco].contains(selectedSource) ? browserSession.webView : nil, context: modelContext) {
                         sessionSelections = [session.id]
                     }
                 } else {
@@ -352,8 +392,11 @@ struct ContentView: View {
                 Button("Import records") { startScrape() }
                     .buttonStyle(.borderedProminent)
                     .tint(actionGreen)
-                    .disabled([.nyt, .jstor].contains(selectedSource) || scraper.isRunning || downloadFolder == nil || URL(string: searchURL) == nil)
-                    .help([.nyt, .jstor].contains(selectedSource) ? "Use the source browser so sunBEAR imports with the same signed-in session." : "Import the pasted search-results URL")
+                    .disabled([.nyt, .jstor, .ebsco].contains(selectedSource) || scraper.isRunning || downloadFolder == nil || URL(string: searchURL) == nil)
+                    .help([.nyt, .jstor, .ebsco].contains(selectedSource) ? "Use the source browser so sunBEAR imports with the same signed-in session." : "Import the pasted search-results URL")
+                Button("Import archival PDF…") { beginArchivalPDFImport() }
+                    .disabled(scraper.isRunning)
+                    .help(downloadFolder == nil ? "Choose a save location, then select one or more archival PDFs" : "Extract a draft archival record and attach the original PDF")
             }
             HStack(spacing: 14) {
                 Stepper("Search pages: \(requestedPageCount)", value: $requestedPageCount, in: 1...ScrapeService.maximumSearchPages)
@@ -362,7 +405,10 @@ struct ContentView: View {
                     Toggle("Download PDFs", isOn: $shouldDownloadPDFs)
                         .fixedSize()
                 }
-                Button { choosingFolder = true } label: {
+                Button {
+                    fileImporterMode = .saveLocation
+                    fileImporterPresented = true
+                } label: {
                     Label(downloadFolder?.lastPathComponent ?? "Save location…", systemImage: "folder")
                 }
                 .help(downloadFolder?.path ?? "Choose where downloaded source files will be saved")
@@ -397,6 +443,7 @@ struct ContentView: View {
         case .nyt: "Search New York Times"
         case .jstor: "Search JSTOR"
         case .eric: "Search ERIC"
+        case .ebsco: "Search EBSCO"
         default: "Browse source"
         }
     }
@@ -453,6 +500,49 @@ struct ContentView: View {
         if let session = scraper.start(searchURL: url, destination: folder, shouldDownloadPDFs: shouldDownloadPDFs, saveArticlePages: selectedSource == .nyt && shouldSaveArticlePages, pageLimit: requestedPageCount, context: modelContext) {
             sessionSelections = [session.id]
         }
+    }
+
+    private func importArchivalPDFs(_ urls: [URL]) {
+        guard let destination = downloadFolder, !urls.isEmpty else {
+            scraper.status = "Choose a save location before importing archival PDFs."
+            return
+        }
+        let rootAccess = destination.startAccessingSecurityScopedResource()
+        defer { if rootAccess { destination.stopAccessingSecurityScopedResource() } }
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd HH-mm-ss"
+        let sessionName = "Archival PDFs - \(formatter.string(from: .now))"
+        let sessionFolder = destination.appendingPathComponent(sessionName, isDirectory: true)
+        do {
+            try FileManager.default.createDirectory(at: sessionFolder, withIntermediateDirectories: true)
+            let session = ScrapeSession(name: sessionName, searchURL: "local-pdf-import", folderPath: sessionFolder.path, startedAt: .now, pagesScraped: urls.count, isComplete: true)
+            modelContext.insert(session)
+            var imported = 0
+            for url in urls {
+                let access = url.startAccessingSecurityScopedResource()
+                defer { if access { url.stopAccessingSecurityScopedResource() } }
+                var target = sessionFolder.appendingPathComponent(url.lastPathComponent)
+                var suffix = 2
+                while FileManager.default.fileExists(atPath: target.path) {
+                    target = sessionFolder.appendingPathComponent("\(url.deletingPathExtension().lastPathComponent)-\(suffix).pdf")
+                    suffix += 1
+                }
+                try FileManager.default.copyItem(at: url, to: target)
+                let extracted = try ArchivalPDFExtractor.extract(from: target)
+                let item = Item(title: extracted.title, documentType: "Archival PDF bundle", collection: "Local archival documents", documentNumber: extracted.documentNumber, releaseDecision: "Declassified", originalClassification: extracted.originalClassification, pageCount: extracted.pageCount, documentCreationDate: extracted.publicationDate, publicationDate: extracted.publicationDate, contentType: "Department of State archival record", caseNumber: extracted.caseNumber, recordURL: target.absoluteString, body: extracted.abstract, keywords: extracted.keywords, localPDFPaths: [target.path], session: session)
+                modelContext.insert(item)
+                imported += 1
+            }
+            sessionSelections = [session.id]
+            scraper.status = "Imported \(imported) archival PDF bundle\(imported == 1 ? "" : "s"). Review the draft metadata before sending to EndNote."
+        } catch {
+            scraper.status = "PDF import failed: \(error.localizedDescription)"
+        }
+    }
+
+    private func beginArchivalPDFImport() {
+        fileImporterMode = .archivalPDFs
+        fileImporterPresented = true
     }
 
     private func exportSessions(_ sessions: [ScrapeSession]) {
@@ -662,7 +752,7 @@ private enum SessionSort: String, CaseIterable, Identifiable {
 }
 
 private struct DocumentDetailView: View {
-    let item: Item
+    @Bindable var item: Item
     let securityScopedRoot: URL?
     @State private var openError = ""
 
@@ -679,9 +769,42 @@ private struct DocumentDetailView: View {
                     row("Classification", item.originalClassification)
                     row("Release decision", item.releaseDecision)
                 }
+                if isArchivalPDF {
+                    GroupBox("Review extracted metadata") {
+                        VStack(alignment: .leading, spacing: 10) {
+                            editableField("Title", text: $item.title)
+                            editableField("Document numbers", text: $item.documentNumber)
+                            editableField("Document type", text: $item.documentType)
+                            editableField("Collection", text: $item.collection)
+                            editableField("Creation date", text: $item.documentCreationDate)
+                            editableField("Release date", text: $item.documentReleaseDate)
+                            editableField("Publication date", text: $item.publicationDate)
+                            editableField("Classification", text: $item.originalClassification)
+                            editableField("Release decision", text: $item.releaseDecision)
+                            editableField("Sequence number", text: $item.sequenceNumber)
+                            editableField("Content type", text: $item.contentType)
+                            editableField("Case number", text: $item.caseNumber)
+                            editableField("Keywords", text: $item.keywords)
+                            Text("Draft abstract / description").font(.caption).foregroundStyle(.secondary)
+                            TextEditor(text: $item.body)
+                                .font(.body)
+                                .frame(minHeight: 110)
+                                .overlay(RoundedRectangle(cornerRadius: 6).stroke(.quaternary))
+                            Text("These fields are drafts generated from OCR text. Review them before exporting to EndNote.")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        .padding(6)
+                    }
+                }
                 Divider()
                 Button("Open \(sourceTitle) record") { openWebRecord() }
                     .buttonStyle(.link)
+                if isEBSCOBook {
+                    Button("Choose book download options") { openWebRecord() }
+                        .buttonStyle(.link)
+                        .help("Open EBSCO to choose a permitted full-book or chapter download")
+                }
                 ForEach(Array(item.externalURLs.enumerated()), id: \.offset) { index, value in
                     Button(externalLinkTitle(value, index: index)) { openExternalLink(value) }
                         .buttonStyle(.link)
@@ -690,11 +813,19 @@ private struct DocumentDetailView: View {
                     Button("Open downloaded PDF \(index + 1)") { openLocalFile(path) }
                         .buttonStyle(.link)
                 }
+                if !item.localArticlePath.isEmpty, sourceTitle == ScrapeSource.ebsco.title {
+                    Button(savedFullTextTitle) { openLocalFile(item.localArticlePath) }
+                        .buttonStyle(.link)
+                }
                 if !openError.isEmpty { Text(openError).foregroundStyle(.orange) }
                 if !item.downloadError.isEmpty { Text(item.downloadError).foregroundStyle(.orange) }
                 if !item.articlePageError.isEmpty { Text("Article page: \(item.articlePageError)").foregroundStyle(.orange) }
                 Text("Abstract").font(.headline)
                 Text(item.body.isEmpty ? "No body text was found." : item.body).textSelection(.enabled)
+                if !item.keywords.isEmpty {
+                    Text("Keywords").font(.headline)
+                    Text(item.keywords).textSelection(.enabled)
+                }
             }
             .padding()
             .frame(maxWidth: 760, alignment: .leading)
@@ -707,9 +838,36 @@ private struct DocumentDetailView: View {
         }
     }
 
+    private func editableField(_ label: String, text: Binding<String>) -> some View {
+        HStack(alignment: .firstTextBaseline) {
+            Text(label).foregroundStyle(.secondary).frame(width: 125, alignment: .leading)
+            TextField(label, text: text).textFieldStyle(.roundedBorder)
+        }
+    }
+
+    private var isArchivalPDF: Bool {
+        item.contentType == "Department of State archival record" || item.documentType == "Archival PDF bundle"
+    }
+
     private var sourceTitle: String {
         guard let url = URL(string: item.recordURL) else { return "source" }
         return ScrapeSource.source(for: url)?.title ?? "source"
+    }
+
+    private var isEBSCOBook: Bool {
+        sourceTitle == ScrapeSource.ebsco.title && (
+            item.documentType.localizedCaseInsensitiveContains("ebook") ||
+            item.documentType.localizedCaseInsensitiveContains("book") ||
+            item.collection.localizedCaseInsensitiveContains("ebook")
+        )
+    }
+
+    private var savedFullTextTitle: String {
+        switch URL(fileURLWithPath: item.localArticlePath).pathExtension.lowercased() {
+        case "epub": "Open downloaded EPUB eBook"
+        case "html", "htm": "Open downloaded HTML full text"
+        default: "Open downloaded full text"
+        }
     }
 
     private func openWebRecord() {

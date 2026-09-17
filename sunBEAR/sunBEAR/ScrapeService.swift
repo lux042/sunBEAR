@@ -23,7 +23,7 @@ final class ScrapeService {
         let pageLimit = Self.clampedPageLimit(pageLimit)
         // Keep all NYT navigation in the same signed-in browser. Other sources
         // continue to use an independent background loader.
-        pageLoader = WebPageLoader(webView: [.nyt, .jstor].contains(source) ? authenticatedWebView : nil)
+        pageLoader = WebPageLoader(webView: [.nyt, .jstor, .ebsco].contains(source) ? authenticatedWebView : nil)
         isRunning = true
         completed = 0
         total = 0
@@ -56,7 +56,7 @@ final class ScrapeService {
                     status = "Reading search page \(visitedPages.count)…"
                     session.pagesScraped = visitedPages.count
                     let page: (html: String, finalURL: URL)
-                    if [.nyt, .jstor].contains(source), let renderedSearchHTML, !usedRenderedNYTPage {
+                    if [.nyt, .jstor, .ebsco].contains(source), let renderedSearchHTML, !usedRenderedNYTPage {
                         page = (renderedSearchHTML, current)
                         usedRenderedNYTPage = true
                     } else {
@@ -82,6 +82,9 @@ final class ScrapeService {
                     case .nara:
                         documentURLs.append(contentsOf: NARAHTMLParser.resultLinks(in: html, baseURL: page.finalURL))
                         pageURL = NARAHTMLParser.nextPage(in: html, baseURL: page.finalURL)
+                    case .ebsco:
+                        documentURLs.append(contentsOf: EBSCOHTMLParser.resultLinks(in: html, baseURL: page.finalURL))
+                        pageURL = EBSCOHTMLParser.nextPage(in: html, baseURL: page.finalURL)
                     case .nyt:
                         guard NewYorkTimesHTMLParser.isSearch(page.finalURL) else {
                             throw ScrapeError.nytRedirected(page.finalURL)
@@ -117,11 +120,39 @@ final class ScrapeService {
                         }
                         scraped = document
                     case .nara: scraped = NARAHTMLParser.document(from: html, url: url)
+                    case .ebsco: scraped = EBSCOHTMLParser.document(from: html, url: url)
                     case .nyt: scraped = NewYorkTimesHTMLParser.document(from: html, url: url)
                     }
                     let item = makeItem(scraped)
                     item.session = session
                     context.insert(item)
+                    if source == .ebsco, shouldDownloadPDFs {
+                        do {
+                            status = "Downloading EBSCO full text \(index + 1) of \(total)…"
+                            if let downloaded = try await pageLoader.downloadEBSCOFullText(to: sessionFolder, baseName: safeName(scraped.title)) {
+                                if downloaded.pathExtension.lowercased() == "pdf" {
+                                    item.localPDFPaths.append(downloaded.path)
+                                } else {
+                                    item.localArticlePath = downloaded.path
+                                }
+                            }
+                        } catch {
+                            item.downloadError = error.localizedDescription
+                        }
+                    }
+                    if source == .ebsco,
+                       item.localArticlePath.isEmpty,
+                       let onlineTextURL = scraped.externalURLs.first(where: { $0.host?.lowercased() == "research.ebsco.com" }) {
+                        do {
+                            status = "Saving online full text \(index + 1) of \(total)…"
+                            let fullTextPage = try await fetchHTML(onlineTextURL)
+                            let target = uniqueURL(sessionFolder.appendingPathComponent(safeName(scraped.title)).appendingPathExtension("html"))
+                            try fullTextPage.html.write(to: target, atomically: true, encoding: .utf8)
+                            item.localArticlePath = target.path
+                        } catch {
+                            item.articlePageError = "Online full text could not be saved; use the fallback link. \(error.localizedDescription)"
+                        }
+                    }
                     if source == .nyt, saveArticlePages {
                         do {
                             let savedPage = try NewYorkTimesHTMLParser.readableArticlePage(from: html, document: scraped)
@@ -134,7 +165,7 @@ final class ScrapeService {
                     }
                     if shouldDownloadPDFs {
                         do {
-                            item.localPDFPaths = try await downloadPDFs(scraped.pdfURLs, for: item, to: sessionFolder)
+                            item.localPDFPaths.append(contentsOf: try await downloadPDFs(scraped.pdfURLs, for: item, to: sessionFolder))
                         } catch {
                             item.downloadError = error.localizedDescription
                         }
@@ -263,6 +294,10 @@ enum ScrapeFolderNaming {
                   let naraQuery = query.first(where: { $0.name.caseInsensitiveCompare("q") == .orderedSame })?.value?.trimmingCharacters(in: .whitespacesAndNewlines),
                   !naraQuery.isEmpty {
             searchName = "National Archives - \(naraQuery)"
+        } else if source == .ebsco,
+                  let ebscoQuery = query.first(where: { $0.name.caseInsensitiveCompare("q") == .orderedSame })?.value?.trimmingCharacters(in: .whitespacesAndNewlines),
+                  !ebscoQuery.isEmpty {
+            searchName = "EBSCO - \(ebscoQuery)"
         } else if source == .nyt,
                   let nytQuery = query.first(where: { ["query", "q", "search"].contains($0.name.lowercased()) })?.value?.trimmingCharacters(in: .whitespacesAndNewlines),
                   !nytQuery.isEmpty {

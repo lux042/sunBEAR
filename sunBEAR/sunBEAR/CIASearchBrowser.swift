@@ -61,7 +61,7 @@ struct SearchBrowser: View {
                     .padding(.horizontal, 10)
                     .padding(.bottom, 8)
             }
-            if (source == .nyt || source == .jstor) && browserMessage.isEmpty {
+            if (source == .nyt || source == .jstor || source == .ebsco) && browserMessage.isEmpty {
                 Text(browserGuidance)
                     .font(.caption)
                     .foregroundStyle(.secondary)
@@ -84,11 +84,17 @@ struct SearchBrowser: View {
         if source == .jstor {
             return "Search or sign in here. To download PDFs, choose Prepare PDF Downloads once and accept JSTOR's terms if prompted, then return to the results and import."
         }
+        if source == .ebsco {
+            return "Sign in through your library if prompted, run the search here, then import the visible results. sunBEAR keeps this EBSCO session when you reopen the browser."
+        }
         return "Search or sign in here, then import the visible results. This browser keeps the same NYT session each time you open it."
     }
 
     private var canImportCurrentPage: Bool {
-        guard let currentURL else { return false }
+        guard let currentURL = currentURL ?? webView.url else { return false }
+        if source == .ebsco {
+            return currentURL.host?.lowercased() == "research.ebsco.com"
+        }
         if source != .nyt { return source.canImport(currentURL) }
         let host = currentURL.host?.lowercased() ?? ""
         let path = currentURL.path.lowercased().trimmingCharacters(in: CharacterSet(charactersIn: "/"))
@@ -99,7 +105,7 @@ struct SearchBrowser: View {
     }
 
     @MainActor private func importVisiblePage() async {
-        guard let currentURL else { return }
+        guard let currentURL = currentURL ?? webView.url else { return }
         isPreparingImport = true
         browserMessage = source == .nyt ? "Preparing the visible NYT results for import…" : "Preparing this page for import…"
         if source == .nyt, NewYorkTimesHTMLParser.isSearch(currentURL) {
@@ -116,7 +122,7 @@ struct SearchBrowser: View {
         let html = try? await evaluate(snapshotScript) as? String
         guard let visibleURL = webView.url,
               isSameImportContext(currentURL, visibleURL) else {
-            browserMessage = "The page changed while preparing the import. Check the NYT page and try again."
+            browserMessage = "The page changed while preparing the import. Return to the search results and try again."
             isPreparingImport = false
             return
         }
@@ -135,8 +141,41 @@ struct SearchBrowser: View {
                 importURL = components.url ?? visibleURL
             }
         }
+        if source == .ebsco, !ScrapeSource.ebsco.canImport(importURL) {
+            let ebscoSearchStateScript = #"""
+            (() => {
+              const result = document.querySelector('a[href*="/search/details/"], a[href*="/viewer/details/"]');
+              const candidates = Array.from(document.querySelectorAll('input[type="search"], input[name="q"], input[aria-label*="search" i], input[placeholder*="search" i]'));
+              const query = candidates.map(input => (input.value || '').trim()).find(Boolean) || '';
+              return JSON.stringify({ hasResults: !!result, query });
+            })()
+            """#
+            if let stateJSON = try? await evaluate(ebscoSearchStateScript) as? String,
+               let data = stateJSON.data(using: .utf8),
+               let state = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+               state["hasResults"] as? Bool == true,
+               let searchText = state["query"] as? String,
+               !searchText.isEmpty,
+               var components = URLComponents(url: visibleURL, resolvingAgainstBaseURL: false) {
+                let cleanPath = components.path.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+                if cleanPath.lowercased().hasSuffix("/search") {
+                    components.path = "/\(cleanPath)/results"
+                } else if !cleanPath.lowercased().hasSuffix("/search/results") {
+                    components.path = "/\(cleanPath)/search/results"
+                }
+                var items = components.queryItems ?? []
+                items.removeAll { $0.name == "q" }
+                items.append(URLQueryItem(name: "q", value: searchText))
+                components.queryItems = items
+                importURL = components.url ?? visibleURL
+            } else {
+                browserMessage = "Search EBSCO first and wait until the result list appears, then import it."
+                isPreparingImport = false
+                return
+            }
+        }
         guard source.canImport(importURL) else {
-            browserMessage = "Enter a New York Times search term, wait for the results to appear, then try again."
+            browserMessage = "Run a search, wait for the results to appear, then try again."
             isPreparingImport = false
             return
         }
@@ -151,6 +190,10 @@ struct SearchBrowser: View {
             return original.host?.lowercased().hasSuffix("nytimes.com") == true
                 && visible.host?.lowercased().hasSuffix("nytimes.com") == true
                 && originalPath == "search" && visiblePath == "search"
+        }
+        if source == .ebsco {
+            return original.host?.lowercased() == "research.ebsco.com"
+                && visible.host?.lowercased() == "research.ebsco.com"
         }
         return original == visible
     }

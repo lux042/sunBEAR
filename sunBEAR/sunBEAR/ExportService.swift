@@ -46,6 +46,7 @@ enum ExportService {
             \(item.pageCount > 0 ? "<pages>\(xmlStyle(String(item.pageCount)))</pages>" : "")
             \(item.publicationDate.isEmpty ? "" : "<dates><pub-dates><date>\(xmlStyle(item.publicationDate))</date></pub-dates></dates>")
             \(item.body.isEmpty ? "" : "<abstract>\(xmlStyle(item.body))</abstract>")
+            \(keywordsXML(item.keywords))
             \(notesValue(for: item).isEmpty ? "" : "<notes>\(xmlStyle(notesValue(for: item)))</notes>")
             \(relatedURLs.isEmpty ? "" : "<urls><related-urls>\(relatedURLs)</related-urls>\(attachments.isEmpty ? "" : "<pdf-urls>\(attachments)</pdf-urls>")</urls>")
             </record>
@@ -71,6 +72,7 @@ enum ExportService {
             for url in item.externalURLs { appendTagged("%U", value: url, to: &fields) }
             appendTagged("%U", value: item.recordURL, to: &fields)
             appendTagged("%X", value: item.body, to: &fields)
+            appendTagged("%K", value: item.keywords, to: &fields)
             for path in item.localPDFPaths { appendTagged("%>", value: path, to: &fields) }
             return fields.joined(separator: "\n")
         }.joined(separator: "\n\n") + "\n"
@@ -155,6 +157,7 @@ enum ExportService {
         case .eric: "ERIC Number"
         case .pubmed: "PMID"
         case .nara: "National Archives Identifier (NAID)"
+        case .ebsco: "EBSCO Accession Number"
         case .nyt: "NYT Article ID"
         }
     }
@@ -177,6 +180,10 @@ enum ExportService {
             return ("Generic", 13)
         case .nara:
             return ("Generic", 13)
+        case .ebsco:
+            if type.contains("book") { return ("Book", 6) }
+            if type.contains("report") { return ("Report", 27) }
+            return ("Journal Article", 17)
         case .nyt:
             return ("Newspaper Article", 23)
         }
@@ -184,6 +191,15 @@ enum ExportService {
 
     private static func xmlStyle(_ value: String) -> String {
         "<style face=\"normal\" font=\"default\" size=\"100%\">\(xml(value))</style>"
+    }
+
+    private static func keywordsXML(_ value: String) -> String {
+        let entries = value.split(separator: ";")
+            .map { String($0).trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+            .map { "<keyword>\(xmlStyle($0))</keyword>" }
+            .joined()
+        return entries.isEmpty ? "" : "<keywords>\(entries)</keywords>"
     }
 
     private static func xml(_ value: String) -> String {

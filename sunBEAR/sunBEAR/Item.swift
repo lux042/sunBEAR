@@ -20,6 +20,7 @@ final class Item {
     var pdfURLs: [String]
     var externalURLs: [String] = []
     var body: String
+    var keywords: String = ""
     var localPDFPaths: [String]
     var downloadError: String
     var localArticlePath: String = ""
@@ -45,6 +46,7 @@ final class Item {
         pdfURLs: [String] = [],
         externalURLs: [String] = [],
         body: String = "",
+        keywords: String = "",
         localPDFPaths: [String] = [],
         downloadError: String = "",
         localArticlePath: String = "",
@@ -69,6 +71,7 @@ final class Item {
         self.pdfURLs = pdfURLs
         self.externalURLs = externalURLs
         self.body = body
+        self.keywords = keywords
         self.localPDFPaths = localPDFPaths
         self.downloadError = downloadError
         self.localArticlePath = localArticlePath
