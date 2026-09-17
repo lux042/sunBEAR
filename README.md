@@ -14,6 +14,8 @@ Native applications are maintained for macOS and Windows. Both versions respect 
 - PubMed and PubMed Central
 - U.S. National Archives
 - The New York Times
+- EBSCO Discovery Service
+- Local archival PDF bundles
 
 Source websites change over time. A parser may need updating when a provider changes its markup or authentication flow.
 
@@ -32,10 +34,24 @@ The two applications use native platform storage and do not share or migrate the
 - Embedded, persistent browser session for authenticated source access.
 - New York Times search import from the rendered results page, including searches whose query is not shown in the address bar.
 - Full available NYT article text stored in the record and optionally saved as readable HTML.
+- EBSCO result imports through the authenticated embedded browser, preferring PDF and falling back to available HTML full text.
+- Local archival PDF import with editable draft metadata extracted from searchable text.
 - Source-aware TSV and EndNote exports.
 - Downloaded files grouped in a folder for each import session.
 
 To import from the New York Times, choose a save location, open **Search New York Times**, sign in if required, run the search inside sunBEAR, and choose **Import This Search**. The same embedded browser is used for discovery and article loading so its authenticated session remains consistent. NYT may still expire a session or request verification.
+
+### EBSCO imports
+
+Choose a save location, select **EBSCO**, and open **Search EBSCO**. Sign in through your institution if prompted, run the search in sunBEAR's browser, wait for the result list, and select **Import This EBSCO Search**.
+
+For records with downloadable full text, sunBEAR prefers PDF and falls back to the available HTML version. EBSCO books and chapter-limited resources may require the user to choose a permitted download from the record page. Availability, formats, page limits, and DRM remain controlled by EBSCO and the user's institution.
+
+### Archival PDF bundles
+
+Select a save location and choose **Import archival PDF…**. Each uploaded PDF dump becomes one library and EndNote record; individual telegrams, airgrams, or pages inside the dump are not split into separate records. sunBEAR keeps the complete source PDF attached to that record.
+
+The importer proposes a title, folder date range, document numbers, classification, case number, keywords, and a draft description. Review and edit the CIA-style metadata panel before sending the record to EndNote. Extraction uses the PDF's searchable text layer. Image-only scans must be OCRed before import, and all machine-generated metadata should be checked against the original document.
 
 ## Build and test on macOS
 
@@ -73,6 +89,7 @@ Open `Windows/publish/sunBEAR.exe` and keep its companion files together. The in
 - Downloads and readable HTML are written to the folder selected by the user.
 - Website sign-in is handled by the embedded browser. sunBEAR does not store account passwords.
 - Captured article text is limited to content delivered to the signed-in browser session.
+- Local archival PDFs remain in the user-selected save location; draft metadata is generated locally from their searchable text.
 - Live subscriber access, publisher downloads, and EndNote integration depend on the user’s local accounts and installed applications.
 
 ## Repository layout
