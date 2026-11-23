@@ -8,6 +8,12 @@ Built as native applications for macOS and Windows, the project tackles an integ
 
 **Engineering highlights:** native cross-platform implementation · authenticated embedded-browser workflows · structured research data and local persistence · PDF metadata extraction · TSV and EndNote-compatible exports.
 
+## macOS application preview
+
+![sunBEAR macOS research library](Documentation/macos-research-library.png)
+
+*Native macOS research library for organizing saved searches and archival records.*
+
 ## Supported sources
 
 - CIA FOIA Reading Room
@@ -58,6 +64,26 @@ For records with downloadable full text, sunBEAR prefers PDF and falls back to t
 Select a save location and choose **Import archival PDF…**. Each uploaded PDF dump becomes one library and EndNote record; individual telegrams, airgrams, or pages inside the dump are not split into separate records. sunBEAR keeps the complete source PDF attached to that record.
 
 The importer proposes a title, folder date range, document numbers, classification, case number, keywords, and a draft description. Review and edit the CIA-style metadata panel before sending the record to EndNote. Extraction uses the PDF's searchable text layer. Image-only scans must be OCRed before import, and all machine-generated metadata should be checked against the original document.
+
+## macOS workflow screenshots
+
+### Record details and metadata
+
+![sunBEAR record details](Documentation/macos-record-details.png)
+
+*Inspecting a selected research record and its metadata.*
+
+### Research export confirmation
+
+![sunBEAR export confirmation](Documentation/macos-endnote-export.png)
+
+*Research export confirmation in the macOS application.*
+
+### TSV export in Apple Numbers
+
+![sunBEAR TSV export opened in Apple Numbers](Documentation/macos-tsv-numbers.png)
+
+*Structured archival metadata exported as TSV and opened in Apple Numbers.*
 
 ## Build and test on macOS
 
