@@ -1,34 +1,12 @@
 # sunBEAR
 
-## Applications at a glance
+**Native macOS and Windows research software | Swift, SwiftUI, SwiftData, WebKit, C#/.NET 8, Windows Forms, WebView2**
 
-| macOS research library | Windows research library |
-|:---:|:---:|
-| ![sunBEAR macOS research library](Documentation/macos-research-library.png) | ![sunBEAR Windows research library](Documentation/windows-research-library.png) |
+sunBEAR is an open-source, cross-platform desktop research library that brings archival discovery, source-aware importing, document organization, metadata extraction, and citation exports into one workflow.
 
-Both versions provide native research workflows using platform-specific frameworks and local storage. Their libraries do not automatically synchronize.
+Built as native applications for macOS and Windows, the project tackles an integration challenge: public archives, academic databases, and newspapers use different interfaces, authentication requirements, and document formats. sunBEAR provides a consistent research library while respecting each provider's access restrictions.
 
-## Research workflows in action
-
-### Spreadsheet exports
-
-| macOS — Apple Numbers | Windows — Microsoft Excel |
-|:---:|:---:|
-| ![TSV export viewed in Apple Numbers](Documentation/macos-tsv-numbers.png) | ![TSV export viewed in Microsoft Excel](Documentation/windows-tsv-excel.png) |
-
-*Research metadata exported from sunBEAR and opened in spreadsheet applications.*
-
-### EndNote citation export
-
-![sunBEAR citation export workflow](Documentation/macos-endnote-export.png)
-
-*Research citation export workflow shown alongside EndNote.*
-
-## About
-
-sunBEAR is a desktop research library for collecting records from public archives, academic databases, and newspapers. It keeps related searches together, saves source files that the user is authorized to access, and exports citations for spreadsheets and EndNote.
-
-Native applications are maintained for macOS and Windows. Both versions respect publisher authentication and access controls; sunBEAR does not bypass subscriptions, paywalls, or download restrictions.
+**Engineering highlights:** native cross-platform implementation · authenticated embedded-browser workflows · structured research data and local persistence · PDF metadata extraction · TSV and EndNote-compatible exports.
 
 ## Supported sources
 
