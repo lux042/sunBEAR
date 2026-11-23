@@ -104,6 +104,32 @@ For normal development, open the Xcode project, select the `sunBEAR` scheme, and
 
 Windows 1.6.0 brings the Mac library workflows to Windows: a three-column layout, saved-search filtering and sorting, bulk session actions, rendered NYT search imports, optional offline article pages, and JSTOR/PMC PDF preparation. Ctrl/Shift selects multiple saved searches. See the [Windows guide](Windows/README.md) and [Mac feature comparison](Windows/MAC-PARITY.md).
 
+## Windows application screenshots
+
+### Research library
+
+![sunBEAR Windows research library](Documentation/windows-research-library.png)
+
+*Native Windows research library for browsing collections, saved searches, and records.*
+
+### Record details
+
+![sunBEAR Windows record details](Documentation/windows-record-details.png)
+
+*Research record details in the Windows application.*
+
+### Import progress
+
+![sunBEAR Windows import progress](Documentation/windows-import-progress.png)
+
+*Progress feedback during a research import.*
+
+### TSV export in Microsoft Excel
+
+![sunBEAR Windows TSV export in Excel](Documentation/windows-tsv-excel.png)
+
+*Structured research metadata exported from sunBEAR and opened in Microsoft Excel.*
+
 ## Build for Windows
 
 Install the .NET 8 SDK and Microsoft Edge WebView2 Runtime, then run:
