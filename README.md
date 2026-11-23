@@ -1,93 +1,91 @@
 # sunBEAR
 
-**Native macOS and Windows research software | Swift, SwiftUI, SwiftData, WebKit, C#/.NET 8, Windows Forms, WebView2**
+**Cross-platform desktop research library for macOS and Windows**
 
-sunBEAR is an open-source, cross-platform desktop research library that brings archival discovery, source-aware importing, document organization, metadata extraction, and citation exports into one workflow.
+**Swift · SwiftUI · SwiftData · WebKit · C# · .NET 8 · Windows Forms · WebView2**
 
-Built as native applications for macOS and Windows, the project tackles an integration challenge: public archives, academic databases, and newspapers use different interfaces, authentication requirements, and document formats. sunBEAR provides a consistent research library while respecting each provider's access restrictions.
+sunBEAR is an open-source application for discovering, collecting, organizing, and exporting research from public archives, academic databases, and newspapers. It combines source-aware imports, local research libraries, archival PDF metadata extraction, and spreadsheet- and EndNote-compatible exports.
 
-**Engineering highlights:** native cross-platform implementation · authenticated embedded-browser workflows · structured research data and local persistence · PDF metadata extraction · TSV and EndNote-compatible exports.
+The central engineering challenge is integrating research providers with different interfaces, document formats, authentication flows, and download restrictions into a consistent native desktop workflow.
 
-## macOS application preview
+## Application previews
 
-![sunBEAR macOS research library](Documentation/macos-research-library.png)
+| macOS | Windows |
+| --- | --- |
+| ![sunBEAR macOS research library](Documentation/macos-research-library.png) | ![sunBEAR Windows research library](Documentation/windows-research-library.png) |
+| Native SwiftUI research library | Native Windows Forms research library |
 
-*Native macOS research library for organizing saved searches and archival records.*
+## What sunBEAR does
 
-## Supported sources
+- **Research organization:** Collections, saved searches, records, metadata, and locally saved source files in a three-column desktop library.
+- **Source-aware importing:** Dedicated workflows for supported archival, academic, and newspaper sources.
+- **Authenticated browsing:** Embedded browser sessions let users access content through their existing institutional or publisher accounts.
+- **Document processing:** Import archival PDF bundles and propose editable metadata from their searchable text.
+- **Interoperable exports:** Produce structured TSV files and EndNote-compatible research exports.
+- **Local-first storage:** Keep records, paths, and downloads on the user's computer, in user-selected locations.
 
-- CIA FOIA Reading Room
-- JSTOR
-- ERIC
-- PubMed and PubMed Central
-- U.S. National Archives
-- The New York Times
-- EBSCO Discovery Service
-- Local archival PDF bundles
+### Supported sources
 
-Source websites change over time. A parser may need updating when a provider changes its markup or authentication flow.
+CIA FOIA Reading Room · JSTOR · ERIC · PubMed and PubMed Central · U.S. National Archives · The New York Times · EBSCO Discovery Service · Local archival PDF bundles
 
-## Cross-platform implementation
+Availability and supported operations vary by provider and platform. Changes to provider websites can require updates to import logic.
 
-sunBEAR maintains native implementations in Swift/SwiftUI/SwiftData/WebKit for macOS and C#/.NET 8/Windows Forms/WebView2 for Windows. The engineering work includes integrating different external research systems, handling authenticated browser workflows, extracting editable metadata from archival PDFs, and supporting interoperable research exports.
+## Cross-platform architecture
 
-## Platform status
-
-| Platform | Implementation | Getting started |
+| | macOS | Windows |
 | --- | --- | --- |
-| macOS | SwiftUI, SwiftData, and WebKit | Open [`sunBEAR/sunBEAR.xcodeproj`](sunBEAR/sunBEAR.xcodeproj) in Xcode. See the [macOS guide](Documentation/MACOS.md). |
-| Windows 10/11 x64 | C#/.NET 8 Windows Forms and WebView2 | See the [Windows guide](Windows/README.md). Current version: **1.6.0**. |
+| Language | Swift | C# |
+| Interface | SwiftUI | Windows Forms |
+| Browser integration | WebKit | WebView2 |
+| Data layer | SwiftData | Native Windows implementation |
+| Requirements | Xcode and macOS SDK | .NET 8 SDK and WebView2 Runtime |
+| Documentation | [macOS guide](Documentation/MACOS.md) | [Windows guide](Windows/README.md) |
 
-The two applications use native platform storage and do not share or migrate their libraries automatically.
+Both versions implement a research-library workflow using native platform technologies. They use separate local storage; libraries are **not** automatically synchronized or migrated between platforms.
 
-## macOS highlights
+### macOS implementation
 
-- Native three-column library for collections, saved searches, records, and record details.
-- Embedded, persistent browser session for authenticated source access.
-- New York Times search import from the rendered results page, including searches whose query is not shown in the address bar.
-- Full available NYT article text stored in the record and optionally saved as readable HTML.
-- EBSCO result imports through the authenticated embedded browser, preferring PDF and falling back to available HTML full text.
-- Local archival PDF import with editable draft metadata extracted from searchable text.
-- Source-aware TSV and EndNote exports.
-- Downloaded files grouped in a folder for each import session.
+The macOS application supports persistent embedded browser sessions, New York Times search-result imports, available NYT article text and optional offline HTML, EBSCO imports with PDF preference and available HTML fallback, archival PDF metadata drafts, session-organized downloads, and TSV/EndNote exports.
 
-To import from the New York Times, choose a save location, open **Search New York Times**, sign in if required, run the search inside sunBEAR, and choose **Import This Search**. The same embedded browser is used for discovery and article loading so its authenticated session remains consistent. NYT may still expire a session or request verification.
+The archival importer retains each PDF bundle as a single record rather than splitting individual documents or pages. It proposes fields such as title, dates, document numbers, classification, case number, keywords, and description for manual review. **Image-only scans require OCR before import**; sunBEAR uses the PDF's existing searchable text layer.
 
-### EBSCO imports
+### Windows implementation
 
-Choose a save location, select **EBSCO**, and open **Search EBSCO**. Sign in through your institution if prompted, run the search in sunBEAR's browser, wait for the result list, and select **Import This EBSCO Search**.
+Windows **1.6.0** includes the three-column library, saved-search filtering and sorting, bulk session actions, rendered New York Times search imports, optional offline article pages, and JSTOR/PubMed Central PDF preparation. Ctrl/Shift supports multiple saved-search selection.
 
-For records with downloadable full text, sunBEAR prefers PDF and falls back to the available HTML version. EBSCO books and chapter-limited resources may require the user to choose a permitted download from the record page. Availability, formats, page limits, and DRM remain controlled by EBSCO and the user's institution.
+See the [Windows feature comparison](Windows/MAC-PARITY.md) and [validation notes](Windows/VALIDATION.md) for platform-specific behavior and limitations.
 
-### Archival PDF bundles
+## Research workflow gallery
 
-Select a save location and choose **Import archival PDF…**. Each uploaded PDF dump becomes one library and EndNote record; individual telegrams, airgrams, or pages inside the dump are not split into separate records. sunBEAR keeps the complete source PDF attached to that record.
+### macOS: records and exports
 
-The importer proposes a title, folder date range, document numbers, classification, case number, keywords, and a draft description. Review and edit the CIA-style metadata panel before sending the record to EndNote. Extraction uses the PDF's searchable text layer. Image-only scans must be OCRed before import, and all machine-generated metadata should be checked against the original document.
+| Record details | Export confirmation |
+| --- | --- |
+| ![macOS record details](Documentation/macos-record-details.png) | ![macOS export confirmation](Documentation/macos-endnote-export.png) |
+| Selected research record and metadata | Export workflow feedback |
 
-## macOS workflow screenshots
+![TSV research export opened in Apple Numbers](Documentation/macos-tsv-numbers.png)
 
-### Record details and metadata
+*Structured archival research metadata exported as TSV and opened in Apple Numbers.*
 
-![sunBEAR record details](Documentation/macos-record-details.png)
+### Windows: records, imports, and exports
 
-*Inspecting a selected research record and its metadata.*
+| Record details | Import progress |
+| --- | --- |
+| ![Windows record details](Documentation/windows-record-details.png) | ![Windows import progress](Documentation/windows-import-progress.png) |
+| Selected research record | Progress during a research import |
 
-### Research export confirmation
+![TSV research export opened in Microsoft Excel](Documentation/windows-tsv-excel.png)
 
-![sunBEAR export confirmation](Documentation/macos-endnote-export.png)
+*Structured research metadata exported as TSV and opened in Microsoft Excel.*
 
-*Research export confirmation in the macOS application.*
+## Build and test
 
-### TSV export in Apple Numbers
+### macOS
 
-![sunBEAR TSV export opened in Apple Numbers](Documentation/macos-tsv-numbers.png)
+Open `sunBEAR/sunBEAR.xcodeproj` in Xcode, select the `sunBEAR` scheme, and run on **My Mac**.
 
-*Structured archival metadata exported as TSV and opened in Apple Numbers.*
-
-## Build and test on macOS
-
-Requirements: a current version of Xcode with the macOS SDK.
+To run the macOS test target:
 
 ```bash
 xcodebuild test \
@@ -98,65 +96,35 @@ xcodebuild test \
   -only-testing:sunBEARTests
 ```
 
-For normal development, open the Xcode project, select the `sunBEAR` scheme, and run it on **My Mac**.
+### Windows
 
-## Windows highlights
-
-Windows 1.6.0 brings the Mac library workflows to Windows: a three-column layout, saved-search filtering and sorting, bulk session actions, rendered NYT search imports, optional offline article pages, and JSTOR/PMC PDF preparation. Ctrl/Shift selects multiple saved searches. See the [Windows guide](Windows/README.md) and [Mac feature comparison](Windows/MAC-PARITY.md).
-
-## Windows application screenshots
-
-### Research library
-
-![sunBEAR Windows research library](Documentation/windows-research-library.png)
-
-*Native Windows research library for browsing collections, saved searches, and records.*
-
-### Record details
-
-![sunBEAR Windows record details](Documentation/windows-record-details.png)
-
-*Research record details in the Windows application.*
-
-### Import progress
-
-![sunBEAR Windows import progress](Documentation/windows-import-progress.png)
-
-*Progress feedback during a research import.*
-
-### TSV export in Microsoft Excel
-
-![sunBEAR Windows TSV export in Excel](Documentation/windows-tsv-excel.png)
-
-*Structured research metadata exported from sunBEAR and opened in Microsoft Excel.*
-
-## Build for Windows
-
-Install the .NET 8 SDK and Microsoft Edge WebView2 Runtime, then run:
+Install the **.NET 8 SDK** and **Microsoft Edge WebView2 Runtime**, then:
 
 ```powershell
 cd Windows
 .\build.ps1
 ```
 
-Open `Windows/publish/sunBEAR.exe` and keep its companion files together. The initial NuGet restore requires internet access. See [Windows/VALIDATION.md](Windows/VALIDATION.md) for tested behavior and known limitations.
+Launch `Windows/publish/sunBEAR.exe` with its companion files. Initial NuGet restore requires internet access. If PowerShell blocks scripts, consult your system's execution-policy settings and run only scripts you trust.
 
-## Data, authentication, and privacy
+See [Windows setup](Windows/README.md) for further instructions.
 
-- Searches, records, and file paths are stored locally.
-- Downloads and readable HTML are written to the folder selected by the user.
-- Website sign-in is handled by the embedded browser. sunBEAR does not store account passwords.
-- Captured article text is limited to content delivered to the signed-in browser session.
-- Local archival PDFs remain in the user-selected save location; draft metadata is generated locally from their searchable text.
-- Live subscriber access, publisher downloads, and EndNote integration depend on the user’s local accounts and installed applications.
+## Access, privacy, and limitations
 
-## Repository layout
+- Searches, records, and file paths are stored locally; downloads and available offline HTML go to user-selected folders.
+- Publisher sign-in happens in the embedded browser; sunBEAR does not store account passwords.
+- sunBEAR does **not** bypass paywalls, subscriptions, DRM, institutional permissions, or download restrictions.
+- Captured article text is limited to material available in the user's authenticated session.
+- Export and download functionality depends on provider permissions and locally installed applications.
+- Extracted archival metadata is a **draft** and should be checked against the original document.
 
-- `sunBEAR/` — current macOS application and tests.
-- `Windows/` — current Windows application, tests, build script, and Windows documentation.
-- `Documentation/` — current cross-platform and macOS documentation.
+## Repository structure
 
-Generated builds, downloaded research files, local databases, disk-image staging folders, and old source snapshots are intentionally excluded. Previous files remain available through Git history and downloadable builds should be published through GitHub Releases.
+- [`sunBEAR/`](sunBEAR/) — macOS application and tests
+- [`Windows/`](Windows/) — Windows application, tests, build scripts, and documentation
+- [`Documentation/`](Documentation/) — guides and application screenshots
+
+Generated builds, downloaded research files, local databases, and temporary development files are excluded. Earlier source revisions remain available in Git history.
 
 ## License
 
