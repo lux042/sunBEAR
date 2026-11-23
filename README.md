@@ -1,5 +1,29 @@
 # sunBEAR
 
+## Applications at a glance
+
+| macOS research library | Windows research library |
+|:---:|:---:|
+| ![sunBEAR macOS research library](Documentation/macos-research-library.png) | ![sunBEAR Windows research library](Documentation/windows-research-library.png) |
+
+Both versions provide native research workflows using platform-specific frameworks and local storage. Their libraries do not automatically synchronize.
+
+## Research workflows in action
+
+### Spreadsheet exports
+
+| macOS — Apple Numbers | Windows — Microsoft Excel |
+|:---:|:---:|
+| ![TSV export viewed in Apple Numbers](Documentation/macos-tsv-numbers.png) | ![TSV export viewed in Microsoft Excel](Documentation/windows-tsv-excel.png) |
+
+*Research metadata exported from sunBEAR and opened in spreadsheet applications.*
+
+### EndNote citation export
+
+![sunBEAR citation export workflow](Documentation/macos-endnote-export.png)
+
+*Research citation export workflow shown alongside EndNote.*
+
 ## About
 
 sunBEAR is a desktop research library for collecting records from public archives, academic databases, and newspapers. It keeps related searches together, saves source files that the user is authorized to access, and exports citations for spreadsheets and EndNote.
@@ -18,6 +42,10 @@ Native applications are maintained for macOS and Windows. Both versions respect 
 - Local archival PDF bundles
 
 Source websites change over time. A parser may need updating when a provider changes its markup or authentication flow.
+
+## Cross-platform implementation
+
+sunBEAR maintains native implementations in Swift/SwiftUI/SwiftData/WebKit for macOS and C#/.NET 8/Windows Forms/WebView2 for Windows. The engineering work includes integrating different external research systems, handling authenticated browser workflows, extracting editable metadata from archival PDFs, and supporting interoperable research exports.
 
 ## Platform status
 
